@@ -1,0 +1,6 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+/* Dark mode via the data-theme attribute (DaisyUI theme toggle lands with
+   the UI steps). */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
