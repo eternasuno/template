@@ -31,6 +31,17 @@ pnpm check      # Biome checks plus workspace type-checking
 
 The app runs on port `3000` by default (`PORT` overrides it).
 
+## Production
+
+Build the app, then run the server bundle directly:
+
+```sh
+pnpm build
+NODE_ENV=production PORT=3000 node apps/web/dist/server/server.js
+```
+
+Use an absolute `SURREAL_ENDPOINT` (or a managed SurrealDB instance) and a strong `BETTER_AUTH_SECRET` in production. The default embedded store path is resolved relative to `apps/web/dist/server`, so running from the repository root with the command above places data at `apps/web/data`.
+
 ## Architecture
 
 ```text

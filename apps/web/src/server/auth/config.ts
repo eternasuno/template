@@ -1,15 +1,13 @@
 import { surrealAdapter } from '@surrealdb/better-auth';
 import type { BetterAuthOptions } from 'better-auth';
 import type { Surreal } from 'surrealdb';
+import { BETTER_AUTH_URL } from '../../env.ts';
 
 export type AuthConfig = Omit<BetterAuthOptions, 'database'>;
 
-const env = (name: string, fallback: string): string =>
-  process.env[name] || fallback;
-
 export const authConfig = {
   appName: 'Solid Surreal Starter',
-  baseURL: env('BETTER_AUTH_URL', 'http://localhost:3000'),
+  baseURL: BETTER_AUTH_URL,
   emailAndPassword: { enabled: true },
   telemetry: { enabled: false },
 } satisfies AuthConfig;

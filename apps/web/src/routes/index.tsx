@@ -1,11 +1,14 @@
-import { defineFileRoute } from '@solidjs/router/fs';
 import { useNavigate } from '@solidjs/router';
+import { defineFileRoute } from '@solidjs/router/fs';
 import { createSignal } from 'solid-js';
 import { authClient } from '../lib/auth-client.ts';
 import { getHomeData, type HomeData } from '../server/auth/home-data.ts';
 
+// Solid Router's preload contract is typed synchronously, but the runtime
+// awaits the returned Promise during SSR. The cast keeps the type honest on
+// our side without changing behavior.
 export const route = defineFileRoute<'/', HomeData>('/', {
-  preload: () => getHomeData() as unknown as HomeData,
+  preload: (() => getHomeData()) as unknown as () => HomeData,
 });
 
 interface HomeProps {

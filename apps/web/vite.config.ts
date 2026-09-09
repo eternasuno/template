@@ -3,9 +3,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { PageFileSystemRouter } from 'filesystem-routing';
 import { fileRoutes } from 'filesystem-routing/vite';
 import { defineConfig } from 'vitest/config';
-
-// Match BETTER_AUTH_URL / PORT from the root .env.example.
-const port = 3000;
+import { PORT } from './src/env.ts';
 
 const routeExtensions = ['js', 'jsx', 'ts', 'tsx'];
 
@@ -45,8 +43,8 @@ export default defineConfig({
     }),
     tailwindcss(),
   ],
-  server: { port },
-  preview: { port },
+  server: { port: PORT },
+  preview: { port: PORT },
   test: {
     // The Solid plugin defaults tests to a jsdom client posture; this app's
     // tests are server-runtime (sessions, guards, database on mem://), and

@@ -1,5 +1,5 @@
-import { setupTestDatabase } from './db.ts';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { setupTestDatabase } from './db.ts';
 
 const baseURL = 'http://localhost:3000';
 

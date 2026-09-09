@@ -1,7 +1,7 @@
-import { setupTestDatabase } from './db.ts';
 import { createRequestEvent } from '@solidjs/web';
 import { provideRequestEvent } from '@solidjs/web/storage';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { setupTestDatabase } from './db.ts';
 
 const baseURL = 'http://localhost:3000';
 
@@ -23,7 +23,9 @@ beforeAll(async () => {
   await setupTestDatabase();
   vi.stubEnv('BETTER_AUTH_SECRET', 'session-test-secret-not-for-production');
   ({ auth } = await import('../src/server/auth/auth.ts'));
-  ({ getSession, requireUser, withAuth } = await import('../src/server/auth/session.ts'));
+  ({ getSession, requireUser, withAuth } = await import(
+    '../src/server/auth/session.ts'
+  ));
   ({ getMe } = await import('../src/server/auth/get-me.ts'));
 }, 30_000);
 

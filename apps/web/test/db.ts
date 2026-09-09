@@ -1,7 +1,6 @@
-import { surrealAdapter } from '@surrealdb/better-auth';
-import { createAuthOptions } from '../src/server/auth/config.ts';
-
 export async function setupTestDatabase(): Promise<void> {
+  const { createAuthOptions } = await import('../src/server/auth/config.ts');
+  const { surrealAdapter } = await import('@surrealdb/better-auth');
   const { getDb } = await import('../src/server/db/index.ts');
   const db = await getDb();
   const options = createAuthOptions(db);

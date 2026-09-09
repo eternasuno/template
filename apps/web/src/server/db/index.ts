@@ -1,10 +1,16 @@
 import { createNodeEngines } from '@surrealdb/node';
 import {
+  type CodecOptions,
   RecordId,
   StringRecordId,
   Surreal,
-  type CodecOptions,
 } from 'surrealdb';
+import {
+  SURREAL_DATABASE,
+  SURREAL_ENDPOINT,
+  SURREAL_NAMESPACE,
+  VITEST,
+} from '../../env.ts';
 
 export interface DbConfig {
   endpoint: string;
@@ -12,15 +18,10 @@ export interface DbConfig {
   database: string;
 }
 
-const orDefault = (value: string | undefined, fallback: string): string =>
-  value && value.trim() !== '' ? value : fallback;
-
-const env = (name: string): string | undefined => process.env[name];
-
 export const dbConfig: DbConfig = {
-  endpoint: orDefault(env('SURREAL_ENDPOINT'), 'surrealkv://./data'),
-  namespace: orDefault(env('SURREAL_NAMESPACE'), 'app'),
-  database: orDefault(env('SURREAL_DATABASE'), 'app'),
+  endpoint: SURREAL_ENDPOINT,
+  namespace: SURREAL_NAMESPACE,
+  database: SURREAL_DATABASE,
 };
 
 interface ForeignRecordId {
@@ -83,7 +84,7 @@ const globalScope = globalThis as DbGlobal;
 let shutdownRegistered = false;
 
 function registerShutdown(): void {
-  if (shutdownRegistered || env('VITEST')) return;
+  if (shutdownRegistered || VITEST) return;
   shutdownRegistered = true;
   for (const signal of ['SIGINT', 'SIGTERM'] as const) {
     process.once(signal, () => {

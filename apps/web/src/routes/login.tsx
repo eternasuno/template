@@ -1,10 +1,12 @@
-import { defineFileRoute } from '@solidjs/router/fs';
 import { useNavigate } from '@solidjs/router';
+import { defineFileRoute } from '@solidjs/router/fs';
 import { createSignal } from 'solid-js';
 import { AuthFormField } from '../components/AuthFormField.tsx';
 import { authClient } from '../lib/auth-client.ts';
 
 export const route = defineFileRoute('/login', {});
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 interface LoginForm {
   email: string;
@@ -72,6 +74,8 @@ export default function Login() {
   const validate = () => {
     const errors: LoginFieldErrors = {};
     if (form().email.trim() === '') errors.email = 'Email is required.';
+    else if (!EMAIL_REGEX.test(form().email.trim()))
+      errors.email = 'Please enter a valid email address.';
     if (form().password === '') errors.password = 'Password is required.';
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;

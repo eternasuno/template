@@ -1,6 +1,6 @@
 'use server';
 
-import { getMe } from './get-me.ts';
+import { getMeUser } from './get-me.ts';
 import { requireUser, type SessionUser } from './session.ts';
 
 export interface HomeData {
@@ -18,6 +18,6 @@ export interface HomeData {
  */
 export async function getHomeData(): Promise<HomeData> {
   const guard = await requireUser();
-  const me = await getMe();
+  const me = await getMeUser();
   return { guard, me };
 }

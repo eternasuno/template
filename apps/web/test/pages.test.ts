@@ -1,7 +1,7 @@
-import { setupTestDatabase } from './db.ts';
 import { createRequestEvent } from '@solidjs/web';
 import { provideRequestEvent } from '@solidjs/web/storage';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { setupTestDatabase } from './db.ts';
 
 const baseURL = 'http://localhost:3000';
 

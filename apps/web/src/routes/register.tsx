@@ -7,6 +7,7 @@ import { authClient } from '../lib/auth-client.ts';
 export const route = defineFileRoute('/register', {});
 
 const MIN_PASSWORD_LENGTH = 8;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const INITIAL_FORM: RegisterForm = {
   name: '',
@@ -28,9 +29,12 @@ function validateRegisterForm(values: RegisterForm) {
   const errors: RegisterFieldErrors = {};
   if (values.name.trim() === '') errors.name = 'Name is required.';
   if (values.email.trim() === '') errors.email = 'Email is required.';
+  else if (!EMAIL_REGEX.test(values.email.trim()))
+    errors.email = 'Please enter a valid email address.';
   if (values.password.length < MIN_PASSWORD_LENGTH)
     errors.password = 'Password must be at least 8 characters.';
-  if (values.password !== values.confirm) errors.confirm = 'Passwords do not match.';
+  if (values.password !== values.confirm)
+    errors.confirm = 'Passwords do not match.';
   return errors;
 }
 
