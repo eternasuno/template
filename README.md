@@ -1,109 +1,119 @@
-# Solid Surreal Starter
+# Solid Effect Starter
 
-A self-hosted full-stack starter built with SolidJS 2 SSR/start mode, server functions, embedded SurrealDB/SurrealKV, Better Auth, Tailwind CSS v4, and DaisyUI v5. The workspace uses pnpm and Turborepo.
+A self-hosted pnpm/Turborepo starter with a pure SolidJS 2 client application and a separate Effect HTTP API backed by Better Auth and embedded SurrealDB/SurrealKV. The UI uses Tailwind CSS v4 and DaisyUI v5.
 
 ## Prerequisites
 
-- Node.js **22.12 or newer**
-- pnpm **12.3.4** (`corepack enable` can manage the package-manager version)
+- Node.js **22.19 or newer**
+- pnpm **12.3.4**
 
-Install dependencies from the repository root:
+Install dependencies and create the local configuration:
 
 ```sh
 pnpm install
+cp .env.example .env
 ```
 
-Copy `.env.example` to `.env` and set `BETTER_AUTH_SECRET` to a long random value. The default development database is an embedded SurrealKV store at `./data`; keep this directory out of version control. `BETTER_AUTH_URL` should match the app origin when deployed.
+Replace `BETTER_AUTH_SECRET` with a long random value, for example from `openssl rand -base64 32`.
+
+## Development
+
+```sh
+pnpm dev
+```
+
+By default:
+
+- Web SPA: `http://localhost:5173`
+- Effect API: `http://localhost:3000`
+
+Both applications run as independent Turborepo tasks. Vite proxies `/api` to the Effect server during development and preview, so browser authentication remains same-origin without API CORS middleware.
 
 ## Commands
 
-Run commands from the repository root:
-
 ```sh
-pnpm dev        # start the web app in development
-pnpm build      # create the production build
+pnpm dev        # run the web and API development servers
+pnpm build      # build both applications
+pnpm start      # run the built API server
+pnpm preview    # locally preview the built web SPA with Vite
 pnpm typecheck  # type-check every workspace package
-pnpm test       # run Vitest tests
+pnpm test       # run all Vitest suites
 pnpm lint       # lint with Biome
 pnpm format     # format files with Biome
 pnpm check      # Biome checks plus workspace type-checking
 ```
 
-The app runs on port `3000` by default (`PORT` overrides it).
-
-## Production
-
-Build the app, then run the server bundle directly:
-
-```sh
-pnpm build
-NODE_ENV=production PORT=3000 node apps/web/dist/server/server.js
-```
-
-Use an absolute `SURREAL_ENDPOINT` (or a managed SurrealDB instance) and a strong `BETTER_AUTH_SECRET` in production. The default embedded store path is resolved relative to `apps/web/dist/server`, so running from the repository root with the command above places data at `apps/web/data`.
-
 ## Architecture
 
 ```text
-Browser UI
-  -> Solid server function
-  -> session guard
-  -> server-only module
-  -> embedded SurrealDB / SurrealKV
+Browser
+  -> apps/web: static SolidJS SPA
+  -> credentialed HTTP requests
+  -> apps/api: Effect HttpServer
+       -> Better Auth
+       -> SurrealDB / SurrealKV
 ```
 
-`apps/web` is the runtime application. Files under `apps/web/src/routes` are filesystem-routed pages and API handlers; `apps/web/src/server` contains request-aware server functions, authentication, and persistence. Vite is configured for SSR, `start`, and server functions. Root tooling and shared configuration stay at the workspace root.
+- `apps/web` contains browser-only routes, components, and the Better Auth client. Vite builds static assets with `ssr: false`; there are no server functions or server runtime modules.
+- `apps/api/src/routes` owns HTTP routing. Better Auth handles `/api/auth/*`.
+- `apps/api/src/runtime` holds the Effect layers for Better Auth and SurrealDB; `apps/api/src/app.ts` composes them into the HTTP `AppLive`, and `apps/api/src/server.ts` is the process entry that launches it. The server entry owns layer acquisition and graceful shutdown via `NodeRuntime`.
+- `apps/api/test` tests the database, the authentication protocol, and HTTP handlers against `mem://`.
+
+### Security boundaries
+
+The backend derives identity only from the Better Auth session cookie on the incoming request. It never accepts a client-supplied user ID as identity. Database clients, embedded engines, secrets, and Better Auth server configuration stay in `apps/api` and cannot enter the browser bundle.
+
+Better Auth owns `/api/auth/*`; application endpoints should not reimplement its protocol. Protected endpoints should use `currentUserMiddleware` and derive identity from `CurrentUser` in `apps/api/src/middleware/session.ts`.
 
 ### Embedded SurrealDB
 
-`apps/web/src/server/db/index.ts` owns a process-global `Surreal` singleton. It installs the Node embedded engines, connects to `SURREAL_ENDPOINT`, and selects `SURREAL_NAMESPACE` and `SURREAL_DATABASE`. The singleton is stored on `globalThis` so development HMR reuses the connection; SIGINT/SIGTERM close it cleanly.
+`apps/api/src/runtime/db/index.ts` connects to the configured database and selects its namespace and database. The embedded store defaults to an absolute path under `apps/api/data`, so the database location does not change with the directory the process is started from. Runtime startup does not generate or apply schema.
 
-Generate the Better Auth SurrealQL schema before deployment, then apply the generated file with SurrealDB deployment tooling:
+Better Auth's `auth migrate` command only supports its built-in Kysely adapter, so for the SurrealDB adapter the CLI can only emit DDL. Generate the deployment schema with the package script, then apply the ignored artifact with your deployment tooling:
 
 ```sh
-pnpm --filter web db:generate
+pnpm --filter api db:generate
 ```
 
-The command uses Better Auth CLI with `apps/web/auth.config.ts` and writes the ignored deployment artifact to `apps/web/data/auth-schema.surql`. Runtime startup does not generate or apply schema.
+The output is `apps/api/data/auth-schema.surql`. Apply it with deployment tooling rather than at startup, so schema changes are reviewed, versioned, and applied once instead of racing across restarted instances. Tests initialize the adapter schema directly against `mem://`.
 
-Use these environment variables:
+Run the command through the package script: `auth generate` resolves `--config` and `--output` against the working directory, and pnpm pins that to `apps/api`.
+
+## Environment variables
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `SURREAL_ENDPOINT` | `surrealkv://./data` | Embedded persistent store; use `mem://` for ephemeral runs and tests |
+| `WEB_PORT` | `5173` | Web development/preview port |
+| `API_PORT` | `3000` | Effect HTTP server port |
+| `FRONTEND_ORIGIN` | `http://localhost:5173` | Exact browser origin trusted by Better Auth |
+| `SURREAL_ENDPOINT` | `surrealkv://<apps/api>/data` | Absolute embedded store path; use `mem://` for ephemeral runs. Relative values resolve against the working directory |
 | `SURREAL_NAMESPACE` | `app` | SurrealDB namespace |
 | `SURREAL_DATABASE` | `app` | SurrealDB database |
-| `BETTER_AUTH_SECRET` | — | Required production secret |
-| `BETTER_AUTH_URL` | `http://localhost:3000` | Canonical auth origin |
-| `PORT` | `3000` | Development/server port |
+| `BETTER_AUTH_SECRET` | — | Better Auth signing secret |
+| `BETTER_AUTH_URL` | `http://localhost:5173` | Canonical public site origin used for auth URLs |
 
-The SDK boundary normalizes record IDs between the official Better Auth adapter and the application SDK, enables native dates, and exposes string IDs to auth code.
+Deploy the frontend and `/api` on the same public origin. In development and preview, Vite provides the `/api` proxy.
 
-### Better Auth flow
+## Routes
 
-`apps/web/src/server/auth/auth.ts` creates Better Auth with the official SurrealDB adapter and email/password enabled. `getSession()` in `session.ts` reads headers from the current Solid request event and asks Better Auth to resolve the cookie-backed session. `requireUser()` redirects unauthenticated page requests to `/login`; `withAuth()` applies the same guard to server functions and supplies the trusted session user as the first argument. Application identity always comes from that request session, never from a client-provided user ID.
+### Web
 
-The browser auth client uses Better Auth's protocol for registration, login, session handling, and logout. The catch-all `GET`/`POST` handler at `/api/auth/*` delegates web requests to `auth.handler(request)`. No application route should reimplement that protocol.
+- `/register` — email/password registration
+- `/login` — email/password login
+- `/` — protected account page; redirects to `/login` when no session exists
 
-### Routes
+### API
 
-- `/register` — name, email, password, and confirmation form.
-- `/login` — email/password form.
-- `/` — protected authentication-status page; it loads protected home data and calls `getMe()`.
-- `/api/auth/*` — Better Auth's catch-all API protocol.
+- `/api/auth/*` — Better Auth protocol
 
-## Server-only boundaries
+## Production
 
-Database and auth modules must remain server-only. Import `apps/web/src/server/**` only from SSR code or server functions; do not import them into browser components or `apps/web/src/lib/auth-client.ts`. Server functions use the `'use server'` boundary (for example, `home-data.ts`), and must validate/authorize from the ambient request session before touching persistence. Keep secrets, the embedded engine, database clients, and Better Auth configuration out of client-side imports and serialized data.
+Build both applications:
 
-## Tests
+```sh
+pnpm build
+```
 
-Vitest tests live in `apps/web/test`. They configure `SURREAL_ENDPOINT=mem://` and call the adapter's `createSchema` directly to initialize isolated databases. Auth/page tests use request-event context and real Better Auth handlers to cover missing-session redirects, authenticated identity, and protected `getMe` behavior. Database tests cover initialization and lifecycle. Run the full suite with `pnpm test`; the expected acceptance checks are `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build`.
+`apps/web/dist` is a static SPA. Serve it with a real static host configured to fall back unknown page routes to `index.html`; Vite preview (`pnpm preview`) is only a local inspection tool for the built assets and must not be used as a production web server. `apps/api/dist/server.js` is the Node backend, started by `pnpm start` (or `pnpm --filter api start`); production supervisors may instead run and scale the two processes separately.
 
-## Extension points
-
-- Add a page or API endpoint under `apps/web/src/routes` and let filesystem routing register it.
-- Add protected application operations as `'use server'` functions, wrapping them with `withAuth()` and deriving identity from its injected user.
-- Extend persistence in `apps/web/src/server/db`; generate Better Auth schema through the CLI as part of deployment.
-- Add auth capabilities through Better Auth configuration in `apps/web/src/server/auth/config.ts`; retain `/api/auth/*` as the protocol boundary.
-- Add domain modules below `apps/web/src/server` without introducing a separate server app, ORM, queue, Redis, OAuth provider, or external SurrealDB service unless the starter's constraints are intentionally revised.
+Use an absolute `SURREAL_ENDPOINT` or managed SurrealDB endpoint in production, route `/api` to the Effect server, and set `FRONTEND_ORIGIN` and `BETTER_AUTH_URL` to the public site origin.

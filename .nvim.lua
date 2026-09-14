@@ -1,4 +1,4 @@
-local root = vim.fs.root(0, { "pnpm-workspace.yaml" }) or vim.fn.getcwd()
+local root = vim.fs.root(0, { ".nvim.lua" }) or vim.fn.getcwd()
 
 vim.lsp.config("tsgo", {
   cmd = { vim.fs.joinpath(root, "node_modules", ".bin", "tsc"), "--lsp", "--stdio" },

@@ -1,12 +1,10 @@
 import { useNavigate } from '@solidjs/router';
-import { defineFileRoute } from '@solidjs/router/fs';
 import { createSignal } from 'solid-js';
 import { AuthFormField } from '../components/AuthFormField.tsx';
 import { authClient } from '../lib/auth-client.ts';
 
-export const route = defineFileRoute('/register', {});
-
 const MIN_PASSWORD_LENGTH = 8;
+
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const INITIAL_FORM: RegisterForm = {
@@ -25,18 +23,29 @@ interface RegisterForm {
 
 type RegisterFieldErrors = Partial<Record<keyof RegisterForm, string>>;
 
-function validateRegisterForm(values: RegisterForm) {
+const validateRegisterForm = (values: RegisterForm) => {
   const errors: RegisterFieldErrors = {};
-  if (values.name.trim() === '') errors.name = 'Name is required.';
-  if (values.email.trim() === '') errors.email = 'Email is required.';
-  else if (!EMAIL_REGEX.test(values.email.trim()))
+
+  if (values.name.trim() === '') {
+    errors.name = 'Name is required.';
+  }
+
+  if (values.email.trim() === '') {
+    errors.email = 'Email is required.';
+  } else if (!EMAIL_REGEX.test(values.email.trim())) {
     errors.email = 'Please enter a valid email address.';
-  if (values.password.length < MIN_PASSWORD_LENGTH)
+  }
+
+  if (values.password.length < MIN_PASSWORD_LENGTH) {
     errors.password = 'Password must be at least 8 characters.';
-  if (values.password !== values.confirm)
+  }
+
+  if (values.password !== values.confirm) {
     errors.confirm = 'Passwords do not match.';
+  }
+
   return errors;
-}
+};
 
 interface RegisterFormViewProps {
   form: RegisterForm;
@@ -47,7 +56,7 @@ interface RegisterFormViewProps {
   onSubmit: (event: Event) => void;
 }
 
-function SubmitButton(props: { submitting: boolean }) {
+const SubmitButton = (props: { submitting: boolean }) => {
   return (
     <button
       type="submit"
@@ -58,9 +67,9 @@ function SubmitButton(props: { submitting: boolean }) {
       {props.submitting ? 'Creating account…' : 'Create account'}
     </button>
   );
-}
+};
 
-function RegisterFormView(props: RegisterFormViewProps) {
+const RegisterFormView = (props: RegisterFormViewProps) => {
   return (
     <form onSubmit={props.onSubmit} class="space-y-4" novalidate>
       <AuthFormField
@@ -106,9 +115,9 @@ function RegisterFormView(props: RegisterFormViewProps) {
       <SubmitButton submitting={props.submitting} />
     </form>
   );
-}
+};
 
-function useRegisterForm() {
+const useRegisterForm = () => {
   const navigate = useNavigate();
   const [form, setForm] = createSignal<RegisterForm>(INITIAL_FORM);
   const [fieldErrors, setFieldErrors] = createSignal<RegisterFieldErrors>({});
@@ -123,18 +132,26 @@ function useRegisterForm() {
     setFormError('');
     const errors = validateRegisterForm(form());
     setFieldErrors(errors);
-    if (Object.keys(errors).length > 0) return;
+
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
+
     setSubmitting(true);
+
     try {
       const { error } = await authClient.signUp.email({
         name: form().name.trim(),
         email: form().email.trim(),
         password: form().password,
       });
+
       if (error) {
         setFormError(error.message ?? 'Registration failed.');
+
         return;
       }
+
       navigate('/');
     } catch {
       setFormError('Registration failed. Please try again.');
@@ -151,9 +168,9 @@ function useRegisterForm() {
     updateField,
     handleSubmit,
   };
-}
+};
 
-export default function Register() {
+const Register = () => {
   const {
     form,
     fieldErrors,
@@ -186,4 +203,6 @@ export default function Register() {
       </div>
     </main>
   );
-}
+};
+
+export default Register;

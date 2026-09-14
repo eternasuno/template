@@ -1,25 +1,18 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
+import { createSurreal } from '../src/runtime/db';
 
 describe('database smoke', () => {
-  const tempDir = fs.mkdtempSync(
-    path.join(os.tmpdir(), 'solid-surreal-smoke-')
-  );
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'api-surreal-smoke-'));
   const kvEndpoint = `surrealkv://${tempDir.replace(/\\/g, '/')}/kv`;
 
-  beforeAll(() => {
-    vi.stubEnv('SURREAL_ENDPOINT', 'mem://');
-  });
-
   afterAll(() => {
-    vi.unstubAllEnvs();
     fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
   it('connects to mem:// and runs basic queries', async () => {
-    const { createSurreal } = await import('../src/server/db/index.ts');
     const db = await createSurreal({
       endpoint: 'mem://',
       namespace: 'app',
@@ -40,18 +33,7 @@ describe('database smoke', () => {
     await db.close();
   });
 
-  it('reuses the process singleton', async () => {
-    const { getDb, closeDb } = await import('../src/server/db/index.ts');
-
-    const a = await getDb();
-    const b = await getDb();
-    expect(a).toBe(b);
-
-    await closeDb();
-  });
-
   it('persists data to a SurrealKV file store', async () => {
-    const { createSurreal } = await import('../src/server/db/index.ts');
     const db = await createSurreal({
       endpoint: kvEndpoint,
       namespace: 'app',

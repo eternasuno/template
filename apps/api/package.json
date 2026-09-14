@@ -1,0 +1,29 @@
+{
+  "name": "api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "start": "node --env-file-if-exists=../../.env dist/server.js",
+    "dev": "node --env-file-if-exists=../../.env --import tsx src/server.ts",
+    "db:generate": "auth generate --config ./auth.config.ts --output ./data/auth-schema.surql --yes",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@effect/platform-node": "4.0.0-rc.113",
+    "@surrealdb/better-auth": "0.1.0",
+    "@surrealdb/node": "3.0.3",
+    "better-auth": "1.7.3",
+    "effect": "4.0.0-rc.113",
+    "surrealdb": "2.0.8"
+  },
+  "devDependencies": {
+    "@types/node": "26.5.0",
+    "auth": "1.7.3",
+    "vite": "8.2.2",
+    "tsx": "4.23.1",
+    "vitest": "5.0.0"
+  }
+}

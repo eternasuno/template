@@ -33,7 +33,6 @@ vite.config.ts.timestamp-*
 
 # Embedded SurrealDB (SurrealKV) data
 data/
-apps/web/data/
 .surreal/
 
 # Test coverage

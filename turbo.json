@@ -3,7 +3,9 @@
   "globalDependencies": [".env", "tsconfig.json"],
   "globalEnv": [
     "NODE_ENV",
-    "PORT",
+    "API_PORT",
+    "WEB_PORT",
+    "FRONTEND_ORIGIN",
     "SURREAL_ENDPOINT",
     "SURREAL_NAMESPACE",
     "SURREAL_DATABASE",
@@ -12,6 +14,10 @@
   "globalPassThroughEnv": ["BETTER_AUTH_SECRET"],
   "tasks": {
     "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "start": {
       "cache": false,
       "persistent": true
     },
@@ -24,7 +30,7 @@
       "outputs": []
     },
     "test": {
-      "outputs": ["coverage/**"]
+      "outputs": []
     }
   }
 }

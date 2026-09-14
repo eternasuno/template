@@ -1,10 +1,7 @@
 import { useNavigate } from '@solidjs/router';
-import { defineFileRoute } from '@solidjs/router/fs';
 import { createSignal } from 'solid-js';
 import { AuthFormField } from '../components/AuthFormField.tsx';
 import { authClient } from '../lib/auth-client.ts';
-
-export const route = defineFileRoute('/login', {});
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -24,7 +21,7 @@ interface LoginFormViewProps {
   onSubmit: (event: Event) => void;
 }
 
-function LoginFormView(props: LoginFormViewProps) {
+const LoginFormView = (props: LoginFormViewProps) => {
   return (
     <form onSubmit={props.onSubmit} class="space-y-4" novalidate>
       <AuthFormField
@@ -60,9 +57,25 @@ function LoginFormView(props: LoginFormViewProps) {
       </button>
     </form>
   );
-}
+};
 
-export default function Login() {
+const validateLoginForm = (values: LoginForm) => {
+  const errors: LoginFieldErrors = {};
+
+  if (values.email.trim() === '') {
+    errors.email = 'Email is required.';
+  } else if (!EMAIL_REGEX.test(values.email.trim())) {
+    errors.email = 'Please enter a valid email address.';
+  }
+
+  if (values.password === '') {
+    errors.password = 'Password is required.';
+  }
+
+  return errors;
+};
+
+const useLoginForm = () => {
   const navigate = useNavigate();
   const [form, setForm] = createSignal<LoginForm>({ email: '', password: '' });
   const [fieldErrors, setFieldErrors] = createSignal<LoginFieldErrors>({});
@@ -71,29 +84,31 @@ export default function Login() {
 
   const updateField = (field: keyof LoginForm, value: string) =>
     setForm((current) => ({ ...current, [field]: value }));
-  const validate = () => {
-    const errors: LoginFieldErrors = {};
-    if (form().email.trim() === '') errors.email = 'Email is required.';
-    else if (!EMAIL_REGEX.test(form().email.trim()))
-      errors.email = 'Please enter a valid email address.';
-    if (form().password === '') errors.password = 'Password is required.';
-    setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
+
   const handleSubmit = async (event: Event) => {
     event.preventDefault();
     setFormError('');
-    if (!validate()) return;
+    const errors = validateLoginForm(form());
+    setFieldErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      return;
+    }
+
     setSubmitting(true);
+
     try {
       const { error } = await authClient.signIn.email({
         email: form().email.trim(),
         password: form().password,
       });
+
       if (error) {
         setFormError(error.message ?? 'Sign in failed.');
+
         return;
       }
+
       navigate('/');
     } catch {
       setFormError('Sign in failed. Please try again.');
@@ -101,6 +116,26 @@ export default function Login() {
       setSubmitting(false);
     }
   };
+
+  return {
+    form,
+    fieldErrors,
+    formError,
+    submitting,
+    updateField,
+    handleSubmit,
+  };
+};
+
+const Login = () => {
+  const {
+    form,
+    fieldErrors,
+    formError,
+    submitting,
+    updateField,
+    handleSubmit,
+  } = useLoginForm();
 
   return (
     <main class="flex min-h-screen items-center justify-center p-4">
@@ -125,4 +160,6 @@ export default function Login() {
       </div>
     </main>
   );
-}
+};
+
+export default Login;

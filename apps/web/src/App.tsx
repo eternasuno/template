@@ -1,7 +1,7 @@
 import './index.css';
 import { Router } from './router';
 
-export default function App() {
+const App = () => {
   return (
     <Router>
       {(props) => (
@@ -12,4 +12,6 @@ export default function App() {
       )}
     </Router>
   );
-}
+};
+
+export default App;

@@ -1,45 +1,23 @@
 import { useNavigate } from '@solidjs/router';
-import { defineFileRoute } from '@solidjs/router/fs';
-import { createSignal } from 'solid-js';
-import { authClient } from '../lib/auth-client.ts';
-import { getHomeData, type HomeData } from '../server/auth/home-data.ts';
-
-// Solid Router's preload contract is typed synchronously, but the runtime
-// awaits the returned Promise during SSR. The cast keeps the type honest on
-// our side without changing behavior.
-export const route = defineFileRoute<'/', HomeData>('/', {
-  preload: (() => getHomeData()) as unknown as () => HomeData,
-});
-
-interface HomeProps {
-  data: HomeData;
-}
+import { createEffect, createSignal, onCleanup, Show } from 'solid-js';
+import { authClient } from '../lib/auth-client';
 
 interface HomeContentProps {
-  data: HomeData;
+  name: string;
+  email: string;
   loggingOut: boolean;
   logoutError: string;
   onLogout: () => void;
 }
 
-function HomeContent(props: HomeContentProps) {
+const HomeContent = (props: HomeContentProps) => {
   return (
     <main class="flex min-h-screen items-center justify-center p-4">
       <div class="card w-full max-w-md bg-base-100 shadow-xl">
         <div class="card-body">
-          <h1 class="card-title">Welcome, {props.data.me.name}</h1>
-          <p class="text-base-content/70">{props.data.me.email}</p>
+          <h1 class="card-title">Welcome, {props.name}</h1>
+          <p class="text-base-content/70">{props.email}</p>
           <div class="divider" />
-          <dl class="space-y-2 text-sm">
-            <div class="flex justify-between">
-              <dt class="font-medium">Guard identity</dt>
-              <dd>{props.data.guard.email}</dd>
-            </div>
-            <div class="flex justify-between">
-              <dt class="font-medium">getMe identity</dt>
-              <dd>{props.data.me.email}</dd>
-            </div>
-          </dl>
           <div class="card-actions justify-end">
             <button
               type="button"
@@ -60,22 +38,65 @@ function HomeContent(props: HomeContentProps) {
       </div>
     </main>
   );
+};
+
+const LoadingHome = () => (
+  <main class="flex min-h-screen items-center justify-center p-4">
+    <div class="loading loading-spinner loading-lg" role="status">
+      <span class="sr-only">Loading session</span>
+    </div>
+  </main>
+);
+
+interface HomeErrorProps {
+  message: string;
+  onRetry: () => void;
 }
 
-export default function Home(props: HomeProps) {
+const HomeError = (props: HomeErrorProps) => (
+  <main class="flex min-h-screen items-center justify-center p-4">
+    <div class="card w-full max-w-md bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h1 class="card-title text-error">Unable to load your session</h1>
+        <p class="text-base-content/70" role="alert" aria-live="assertive">
+          {props.message}
+        </p>
+        <div class="card-actions justify-end">
+          <button type="button" class="btn btn-primary" onClick={props.onRetry}>
+            Try again
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+);
+
+const Home = () => {
+  const [session, setSession] = createSignal(authClient.useSession.get());
   const navigate = useNavigate();
   const [loggingOut, setLoggingOut] = createSignal(false);
   const [logoutError, setLogoutError] = createSignal('');
 
+  onCleanup(authClient.useSession.subscribe(setSession));
+
+  createEffect(
+    () => !session().isPending && !session().data && !session().error,
+    (redirect) => void (redirect && navigate('/login', { replace: true }))
+  );
+
   const handleLogout = async () => {
     setLogoutError('');
     setLoggingOut(true);
+
     try {
       const { error } = await authClient.signOut();
+
       if (error) {
         setLogoutError(error.message ?? 'Sign out failed.');
+
         return;
       }
+
       navigate('/login');
     } catch {
       setLogoutError('Sign out failed. Please try again.');
@@ -85,11 +106,32 @@ export default function Home(props: HomeProps) {
   };
 
   return (
-    <HomeContent
-      data={props.data}
-      loggingOut={loggingOut()}
-      logoutError={logoutError()}
-      onLogout={handleLogout}
-    />
+    <Show when={!session().isPending} fallback={<LoadingHome />}>
+      <Show
+        when={session().error}
+        fallback={
+          <Show when={session().data}>
+            {(sessionData) => (
+              <HomeContent
+                name={sessionData().user.name}
+                email={sessionData().user.email}
+                loggingOut={loggingOut()}
+                logoutError={logoutError()}
+                onLogout={handleLogout}
+              />
+            )}
+          </Show>
+        }
+      >
+        {(error) => (
+          <HomeError
+            message={error().message ?? 'Failed to load your session.'}
+            onRetry={() => void session().refetch()}
+          />
+        )}
+      </Show>
+    </Show>
   );
-}
+};
+
+export default Home;

@@ -1,8 +1,8 @@
 import { surrealAdapter } from '@surrealdb/better-auth';
 import type { Surreal } from 'surrealdb';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createAuthOptions } from '../src/server/auth/config.ts';
-import { createSurreal, dbConfig } from '../src/server/db/index.ts';
+import { createSurreal } from '../src/runtime/db';
+import { setupTestDatabase } from './helpers';
 
 interface UserRow {
   id: string;
@@ -15,20 +15,24 @@ interface UserRow {
 
 let db: Surreal;
 
-async function createSchema(): Promise<string> {
-  const options = createAuthOptions(db);
+const createSchema = async (): Promise<string> => {
+  const options = { database: surrealAdapter({ db }) };
   const schema = await surrealAdapter({ db })(options).createSchema?.(options);
 
-  if (!schema) throw new Error('SurrealDB adapter did not provide a schema');
-  return schema.code;
-}
+  if (!schema) {
+    throw new Error('SurrealDB adapter did not provide a schema');
+  }
 
-async function applySchema(): Promise<void> {
-  await db.query(await createSchema());
-}
+  return schema.code;
+};
 
 beforeAll(async () => {
-  db = await createSurreal({ ...dbConfig, endpoint: 'mem://' });
+  db = await createSurreal({
+    endpoint: 'mem://',
+    namespace: 'app',
+    database: 'app',
+  });
+  await setupTestDatabase(db);
 }, 30_000);
 
 afterAll(async () => {
@@ -37,8 +41,8 @@ afterAll(async () => {
 
 describe('database initialization', () => {
   it('applies the generated auth schema idempotently', async () => {
-    await applySchema();
-    await applySchema();
+    await setupTestDatabase(db);
+    await setupTestDatabase(db);
 
     const [info] =
       await db.query<[{ tables: Record<string, string> }]>('INFO FOR DB');
@@ -58,8 +62,7 @@ describe('database initialization', () => {
   });
 
   it('normalizes record ids and dates across the codec', async () => {
-    await applySchema();
-    const options = createAuthOptions(db);
+    const options = { database: surrealAdapter({ db }) };
     const adapter = surrealAdapter({ db })(options);
     const now = new Date();
 

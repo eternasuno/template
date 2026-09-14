@@ -8,7 +8,7 @@ interface AuthFormFieldProps {
   onInput: (value: string) => void;
 }
 
-export function AuthFormField(props: AuthFormFieldProps) {
+export const AuthFormField = (props: AuthFormFieldProps) => {
   const handleInput = (event: InputEvent) => {
     const target = event.currentTarget as HTMLInputElement;
     props.onInput(target.value);
@@ -41,4 +41,4 @@ export function AuthFormField(props: AuthFormFieldProps) {
       )}
     </div>
   );
-}
+};
