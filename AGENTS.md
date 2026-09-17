@@ -13,7 +13,7 @@ Self-hosted starter with a pure SolidJS 2 SPA and a separate Effect HttpServer A
 - `apps/api/src/runtime`: Effect layers for Better Auth and SurrealDB plus the DB codec.
 - `apps/api/src/middleware`: request middleware.
 - `apps/api/test`: backend Vitest tests; initialize `mem://` by calling the SurrealDB adapter's `createSchema` directly.
-- `apps/api/auth.config.ts`: side-effect-free Better Auth CLI configuration for deployment schema generation.
+- `apps/api/src/migrate.ts`: one-off schema migration entry point, run via `db:migrate`.
 
 ## Boundaries
 
@@ -26,7 +26,7 @@ Self-hosted starter with a pure SolidJS 2 SPA and a separate Effect HttpServer A
 
 ## Workflow
 
-- Generate deployment schema with `pnpm --filter api db:generate`, then apply the ignored `apps/api/data/auth-schema.surql` using deployment tooling.
+- Apply the Better Auth schema with `pnpm --filter api db:migrate`; the script derives DDL from the adapter and applies it directly.
 - Keep package tests under each app's `test` directory.
 - Before finishing changes, run `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build`.
 - Read `README.md` for setup, environment variables, routes, and deployment details.

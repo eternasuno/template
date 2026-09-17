@@ -1,6 +1,6 @@
 import { surrealAdapter } from '@surrealdb/better-auth';
 import { type BetterAuthOptions, betterAuth } from 'better-auth';
-import { Config, Context, Effect, Layer, Redacted } from 'effect';
+import { Config, Context, Data, Effect, Layer, Redacted } from 'effect';
 import { Database } from './db';
 
 export class Auth extends Context.Service<
@@ -8,28 +8,34 @@ export class Auth extends Context.Service<
   ReturnType<typeof betterAuth>
 >()('Auth') {}
 
+export class AuthUnavailable extends Data.TaggedError('AuthUnavailable')<{
+  readonly cause: unknown;
+}> {}
+
+export const authOptions = Effect.gen(function* () {
+  const db = yield* Database;
+  const authConfig = yield* Config.all({
+    url: Config.URL('URL').pipe(
+      Config.withDefault(new URL('http://localhost:5173'))
+    ),
+    secret: Config.Redacted('SECRET'),
+  }).pipe(Config.nested('BETTER_AUTH'));
+
+  return {
+    appName: 'Solid Surreal API',
+    emailAndPassword: { enabled: true },
+    telemetry: { enabled: false },
+    baseURL: authConfig.url.toString(),
+    secret: Redacted.value(authConfig.secret),
+    database: surrealAdapter({ db }),
+  } satisfies BetterAuthOptions;
+});
+
 export const AuthLive = Layer.effect(
   Auth,
   Effect.gen(function* () {
-    const authConfig = yield* Config.all({
-      url: Config.URL('URL').pipe(
-        Config.withDefault(new URL('http://localhost:5173'))
-      ),
-      secret: Config.Redacted('SECRET'),
-    }).pipe(Config.nested('BETTER_AUTH'));
-    const origin = yield* Config.URL('FRONTEND_ORIGIN').pipe(
-      Config.withDefault(new URL('http://localhost:5173'))
-    );
-    const db = yield* Database;
+    const options = yield* authOptions;
 
-    return betterAuth<BetterAuthOptions>({
-      appName: 'Solid Surreal API',
-      emailAndPassword: { enabled: true },
-      telemetry: { enabled: false },
-      baseURL: authConfig.url.toString(),
-      secret: Redacted.value(authConfig.secret),
-      trustedOrigins: [origin.origin],
-      database: surrealAdapter({ db }),
-    });
+    return betterAuth<BetterAuthOptions>(options);
   })
 );

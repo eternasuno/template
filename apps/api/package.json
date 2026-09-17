@@ -5,11 +5,11 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "start": "node --env-file-if-exists=../../.env dist/server.js",
-    "dev": "node --env-file-if-exists=../../.env --import tsx src/server.ts",
-    "db:generate": "auth generate --config ./auth.config.ts --output ./data/auth-schema.surql --yes",
+    "start": "node --env-file-if-exists=.env dist/server.js",
+    "dev": "tsx --env-file-if-exists=.env src/server.ts",
+    "db:migrate": "tsx --env-file-if-exists=.env src/migrate.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run"
   },
   "dependencies": {
     "@effect/platform-node": "4.0.0-rc.113",
@@ -20,10 +20,10 @@
     "surrealdb": "2.0.8"
   },
   "devDependencies": {
+    "@effect/vitest": "4.0.0-rc.113",
     "@types/node": "26.5.0",
-    "auth": "1.7.3",
-    "vite": "8.2.2",
     "tsx": "4.23.1",
+    "vite": "8.2.2",
     "vitest": "5.0.0"
   }
 }

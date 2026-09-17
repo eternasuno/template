@@ -6,7 +6,7 @@ import { loadEnv } from 'vite';
 import { defineConfig } from 'vitest/config';
 
 const DEFAULT_PORT = 5173;
-const ENV_DIR = '../..';
+const ENV_DIR = '.';
 const routeExtensions = ['js', 'jsx', 'ts', 'tsx'];
 
 export default defineConfig(({ mode }) => {

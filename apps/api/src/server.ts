@@ -13,7 +13,7 @@ const server = NodeHttpServer.layerConfig(createServer, {
 });
 
 const main = AppLive.pipe(
-  Layer.provide(Layer.provideMerge(AuthLive, DatabaseLive)),
+  Layer.provide(AuthLive.pipe(Layer.provide(DatabaseLive))),
   HttpRouter.serve,
   Layer.provide(server),
   Layer.launch

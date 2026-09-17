@@ -1,33 +1,13 @@
-import type { Surreal } from 'surrealdb';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import type { TestApp } from './helpers';
-import {
-  createTestApp,
-  createTestDatabase,
-  setupTestDatabase,
-  testBaseUrl,
-} from './helpers';
+import { expect, layer } from '@effect/vitest';
+import { Effect, Layer } from 'effect';
+import { AppLive } from '../src/app';
+import { Auth } from '../src/runtime/auth';
+import { TestApp, TestAppLive, TestLayer, testBaseUrl } from './mock';
 
-const frontendOrigin = 'http://localhost:5173';
 const password = 'correct horse battery staple';
-
-let db: Surreal;
-let app: TestApp;
-
-beforeAll(async () => {
-  db = await createTestDatabase();
-  await setupTestDatabase(db);
-  app = createTestApp(db);
-}, 30_000);
-
-afterAll(async () => {
-  await app.dispose();
-  await db.close();
-});
-
 const jsonHeaders = {
   'content-type': 'application/json',
-  origin: frontendOrigin,
+  origin: testBaseUrl,
 };
 
 const cookieHeader = (response: Response): string =>
@@ -36,36 +16,68 @@ const cookieHeader = (response: Response): string =>
     .map((setCookie) => setCookie.split(';')[0] ?? '')
     .join('; ');
 
-describe('email/password flow over the HTTP API', () => {
-  it('registers, signs in, and signs out', async () => {
-    const email = 'flow@api.test';
+const AuthTestLayer = TestAppLive((auth) =>
+  AppLive.pipe(Layer.provide(Layer.succeed(Auth, auth)))
+).pipe(Layer.provideMerge(TestLayer));
 
-    const register = await app.handler(
-      new Request(`${testBaseUrl}/api/auth/sign-up/email`, {
-        method: 'POST',
-        headers: jsonHeaders,
-        body: JSON.stringify({ name: 'Flow Tester', email, password }),
-      })
-    );
-    expect(register.ok).toBe(true);
+layer(AuthTestLayer)('email/password HTTP auth', (it) => {
+  it.effect('registers, signs in, and signs out', () =>
+    Effect.gen(function* () {
+      const app = yield* TestApp;
+      const email = 'flow@api.test';
+      const register = yield* Effect.tryPromise(() =>
+        app.handler(
+          new Request(`${testBaseUrl}/api/auth/sign-up/email`, {
+            method: 'POST',
+            headers: jsonHeaders,
+            body: JSON.stringify({ name: 'Flow Tester', email, password }),
+          })
+        )
+      );
+      const signIn = yield* Effect.tryPromise(() =>
+        app.handler(
+          new Request(`${testBaseUrl}/api/auth/sign-in/email`, {
+            method: 'POST',
+            headers: jsonHeaders,
+            body: JSON.stringify({ email, password }),
+          })
+        )
+      );
+      const cookie = cookieHeader(signIn);
+      const signOut = yield* Effect.tryPromise(() =>
+        app.handler(
+          new Request(`${testBaseUrl}/api/auth/sign-out`, {
+            method: 'POST',
+            headers: { ...jsonHeaders, cookie },
+          })
+        )
+      );
 
-    const signIn = await app.handler(
-      new Request(`${testBaseUrl}/api/auth/sign-in/email`, {
-        method: 'POST',
-        headers: jsonHeaders,
-        body: JSON.stringify({ email, password }),
-      })
-    );
-    expect(signIn.ok).toBe(true);
-    const cookie = cookieHeader(signIn);
-    expect(cookie.length).toBeGreaterThan(0);
+      expect(register.ok).toBe(true);
+      expect(signIn.ok).toBe(true);
+      expect(cookie.length).toBeGreaterThan(0);
+      expect(signOut.ok).toBe(true);
+    })
+  );
 
-    const signOut = await app.handler(
-      new Request(`${testBaseUrl}/api/auth/sign-out`, {
-        method: 'POST',
-        headers: { ...jsonHeaders, cookie },
-      })
-    );
-    expect(signOut.ok).toBe(true);
-  });
+  it.effect('rejects invalid credentials', () =>
+    Effect.gen(function* () {
+      const app = yield* TestApp;
+      const response = yield* Effect.tryPromise(() =>
+        app.handler(
+          new Request(`${testBaseUrl}/api/auth/sign-in/email`, {
+            method: 'POST',
+            headers: jsonHeaders,
+            body: JSON.stringify({
+              email: 'missing@api.test',
+              password,
+            }),
+          })
+        )
+      );
+
+      expect(response.ok).toBe(false);
+      expect(response.status).toBe(401);
+    })
+  );
 });

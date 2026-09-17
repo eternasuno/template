@@ -5,7 +5,7 @@ import {
   HttpServerRequest,
   HttpServerResponse,
 } from 'effect/unstable/http';
-import { Auth } from '../runtime/auth';
+import { Auth, AuthUnavailable } from '../runtime/auth';
 
 export class CurrentUser extends Context.Service<
   CurrentUser,
@@ -22,12 +22,15 @@ export const currentUserMiddleware = HttpRouter.middleware<{
       Effect.gen(function* () {
         const request = yield* HttpServerRequest.HttpServerRequest;
         const webRequest = yield* HttpServerRequest.toWeb(request);
-        const session = yield* Effect.promise(() =>
-          auth.api.getSession({
-            headers: webRequest.headers,
-            returnHeaders: true,
-          })
-        );
+        const session = yield* Effect.tryPromise({
+          try: () =>
+            auth.api.getSession({
+              headers: webRequest.headers,
+              returnHeaders: true,
+            }),
+          catch: (cause) =>
+            new AuthUnavailable({ cause }),
+        });
         const response = session.response
           ? yield* Effect.provideService(handler, CurrentUser, {
               id: session.response.user.id,
@@ -46,6 +49,16 @@ export const currentUserMiddleware = HttpRouter.middleware<{
           HttpServerResponse.setHeaders(headers),
           HttpServerResponse.mergeCookies(cookies)
         );
-      });
+      }).pipe(
+        Effect.tapError((error) =>
+          Effect.logWarning('Authentication unavailable', error)
+        ),
+        Effect.catchTag('AuthUnavailable', () =>
+          HttpServerResponse.json(
+            { error: 'Authentication unavailable' },
+            { status: 500 }
+          )
+        )
+      );
   })
 );

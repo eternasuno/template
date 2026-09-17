@@ -1,90 +1,22 @@
 import { useNavigate } from '@solidjs/router';
 import { createEffect, createSignal, onCleanup, Show } from 'solid-js';
+import { FormError } from '../components/auth-form';
 import { authClient } from '../lib/auth-client';
 
-interface HomeContentProps {
-  name: string;
-  email: string;
-  loggingOut: boolean;
-  logoutError: string;
-  onLogout: () => void;
-}
+type SessionState = ReturnType<(typeof authClient.useSession)['get']>;
 
-const HomeContent = (props: HomeContentProps) => {
-  return (
-    <main class="flex min-h-screen items-center justify-center p-4">
-      <div class="card w-full max-w-md bg-base-100 shadow-xl">
-        <div class="card-body">
-          <h1 class="card-title">Welcome, {props.name}</h1>
-          <p class="text-base-content/70">{props.email}</p>
-          <div class="divider" />
-          <div class="card-actions justify-end">
-            <button
-              type="button"
-              class="btn btn-primary"
-              onClick={props.onLogout}
-              disabled={props.loggingOut}
-              aria-busy={props.loggingOut ? 'true' : 'false'}
-            >
-              {props.loggingOut ? 'Signing out…' : 'Sign out'}
-            </button>
-          </div>
-          {props.logoutError && (
-            <p class="text-error text-sm" role="alert" aria-live="assertive">
-              {props.logoutError}
-            </p>
-          )}
-        </div>
-      </div>
-    </main>
-  );
-};
-
-const LoadingHome = () => (
-  <main class="flex min-h-screen items-center justify-center p-4">
-    <div class="loading loading-spinner loading-lg" role="status">
-      <span class="sr-only">Loading session</span>
-    </div>
-  </main>
+const Spinner = () => (
+  <div class="loading loading-spinner loading-lg" role="status">
+    <span class="sr-only">Loading session</span>
+  </div>
 );
 
-interface HomeErrorProps {
-  message: string;
-  onRetry: () => void;
-}
-
-const HomeError = (props: HomeErrorProps) => (
-  <main class="flex min-h-screen items-center justify-center p-4">
-    <div class="card w-full max-w-md bg-base-100 shadow-xl">
-      <div class="card-body">
-        <h1 class="card-title text-error">Unable to load your session</h1>
-        <p class="text-base-content/70" role="alert" aria-live="assertive">
-          {props.message}
-        </p>
-        <div class="card-actions justify-end">
-          <button type="button" class="btn btn-primary" onClick={props.onRetry}>
-            Try again
-          </button>
-        </div>
-      </div>
-    </div>
-  </main>
-);
-
-const Home = () => {
-  const [session, setSession] = createSignal(authClient.useSession.get());
+const useLogout = () => {
   const navigate = useNavigate();
   const [loggingOut, setLoggingOut] = createSignal(false);
   const [logoutError, setLogoutError] = createSignal('');
 
-  onCleanup(authClient.useSession.subscribe(setSession));
-
-  createEffect(
-    () => !session().isPending && !session().data && !session().error,
-    (redirect) => void (redirect && navigate('/login', { replace: true }))
-  );
-
-  const handleLogout = async () => {
+  const logout = async () => {
     setLogoutError('');
     setLoggingOut(true);
 
@@ -105,32 +37,97 @@ const Home = () => {
     }
   };
 
-  return (
-    <Show when={!session().isPending} fallback={<LoadingHome />}>
-      <Show
-        when={session().error}
-        fallback={
-          <Show when={session().data}>
-            {(sessionData) => (
-              <HomeContent
-                name={sessionData().user.name}
-                email={sessionData().user.email}
-                loggingOut={loggingOut()}
-                logoutError={logoutError()}
-                onLogout={handleLogout}
-              />
-            )}
-          </Show>
-        }
-      >
-        {(error) => (
-          <HomeError
-            message={error().message ?? 'Failed to load your session.'}
-            onRetry={() => void session().refetch()}
-          />
+  return { logout, loggingOut, logoutError };
+};
+
+interface SessionCardProps {
+  session: SessionState;
+  loggingOut: boolean;
+  logoutError: string;
+  onLogout: () => void;
+}
+
+const SessionCard = (props: SessionCardProps) => (
+  <div class="card card-border w-full max-w-sm bg-base-100 shadow-xl">
+    <div class="card-body">
+      <Show when={props.session.data}>
+        {(data) => (
+          <>
+            <h1 class="card-title">Welcome, {data().user.name}</h1>
+            <p class="text-base-content/70">{data().user.email}</p>
+            <FormError message={props.logoutError} />
+            <div class="card-actions justify-end">
+              <button
+                type="button"
+                class="btn btn-outline"
+                onClick={props.onLogout}
+                disabled={props.loggingOut}
+                aria-busy={props.loggingOut ? 'true' : 'false'}
+              >
+                {props.loggingOut ? 'Signing out…' : 'Sign out'}
+              </button>
+            </div>
+          </>
         )}
       </Show>
-    </Show>
+    </div>
+  </div>
+);
+
+const SessionErrorCard = (props: { session: SessionState }) => (
+  <div class="card card-border w-full max-w-sm bg-base-100 shadow-xl">
+    <div class="card-body">
+      <h1 class="card-title text-error">Unable to load your session</h1>
+      <FormError message={props.session.error?.message ?? 'Failed to load your session.'} />
+      <div class="card-actions justify-end">
+        <button
+          type="button"
+          class="btn btn-primary"
+          onClick={() => void props.session.refetch()}
+        >
+          Try again
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+const Home = () => {
+  const navigate = useNavigate();
+  const [session, setSession] = createSignal<SessionState>(authClient.useSession.get());
+  const { logout, loggingOut, logoutError } = useLogout();
+
+  onCleanup(authClient.useSession.subscribe(setSession));
+
+  createEffect(
+    () => {
+      const current = session();
+
+      return !current.isPending && !current.data && !current.error;
+    },
+    (shouldRedirect) => {
+      if (shouldRedirect) {
+        navigate('/login', { replace: true });
+      }
+    }
+  );
+
+  return (
+    <main class="flex min-h-screen items-center justify-center bg-base-200 p-4">
+      <Show when={!session().isPending} fallback={<Spinner />}>
+        <Show
+          when={!session().error}
+          fallback={<SessionErrorCard session={session()} />}
+        >
+          <SessionCard
+            session={session()}
+            loggingOut={loggingOut()}
+            logoutError={logoutError()}
+            onLogout={() => void logout()}
+          />
+        </Show>
+      </Show>
+    </main>
   );
 };
 

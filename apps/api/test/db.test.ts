@@ -1,97 +1,96 @@
+import { expect, layer } from '@effect/vitest';
 import { surrealAdapter } from '@surrealdb/better-auth';
-import type { Surreal } from 'surrealdb';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createSurreal } from '../src/runtime/db';
-import { setupTestDatabase } from './helpers';
+import { Effect } from 'effect';
+import { Database } from '../src/runtime/db';
+import { TestLayer } from './mock';
 
-interface UserRow {
+type UserRow = {
   id: string;
   name: string;
   email: string;
   emailVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
-}
-
-let db: Surreal;
-
-const createSchema = async (): Promise<string> => {
-  const options = { database: surrealAdapter({ db }) };
-  const schema = await surrealAdapter({ db })(options).createSchema?.(options);
-
-  if (!schema) {
-    throw new Error('SurrealDB adapter did not provide a schema');
-  }
-
-  return schema.code;
 };
 
-beforeAll(async () => {
-  db = await createSurreal({
-    endpoint: 'mem://',
-    namespace: 'app',
-    database: 'app',
-  });
-  await setupTestDatabase(db);
-}, 30_000);
+layer(TestLayer)('in-memory database', (it) => {
+  it.effect('applies the auth schema and preserves codec values', () =>
+    Effect.gen(function* () {
+      const db = yield* Database;
+      const adapter = surrealAdapter({ db });
+      const options = { database: adapter };
+      const now = new Date();
+      const created = yield* Effect.tryPromise(() =>
+        adapter(options).create<UserRow>({
+          model: 'user',
+          data: {
+            name: 'Codec Probe',
+            email: 'codec@probe.test',
+            emailVerified: false,
+            createdAt: now,
+            updatedAt: now,
+          },
+        })
+      );
+      const found = yield* Effect.tryPromise(() =>
+        adapter(options).findOne<UserRow>({
+          model: 'user',
+          where: [
+            {
+              field: 'id',
+              value: created.id,
+              operator: 'eq',
+              connector: 'AND',
+              mode: 'sensitive',
+            },
+          ],
+        })
+      );
 
-afterAll(async () => {
-  await db.close();
-});
+      expect(created.id).not.toContain('user:');
+      expect(created.createdAt).toBeInstanceOf(Date);
+      expect(found?.email).toBe('codec@probe.test');
+      expect(found?.createdAt).toBeInstanceOf(Date);
+    })
+  );
 
-describe('database initialization', () => {
-  it('applies the generated auth schema idempotently', async () => {
-    await setupTestDatabase(db);
-    await setupTestDatabase(db);
+  it.effect('generates guarded, idempotent schema', () =>
+    Effect.gen(function* () {
+      const db = yield* Database;
+      const adapter = surrealAdapter({ db });
+      const options = { database: adapter };
+      const createSchema = adapter(options).createSchema;
 
-    const [info] =
-      await db.query<[{ tables: Record<string, string> }]>('INFO FOR DB');
-    expect(Object.keys(info?.tables ?? {})).toEqual(
-      expect.arrayContaining(['user', 'session', 'account', 'verification'])
-    );
-  });
+      if (!createSchema) {
+        return yield* Effect.fail(
+          new Error('SurrealDB adapter did not provide a schema')
+        );
+      }
 
-  it('emits only guarded DDL statements', async () => {
-    const statements = (await createSchema())
-      .split('\n')
-      .filter((line) => line !== '' && !line.startsWith('--'));
-    expect(statements.length).toBeGreaterThan(0);
-    expect(statements.every((line) => line.includes('IF NOT EXISTS'))).toBe(
-      true
-    );
-  });
+      const schema = yield* Effect.tryPromise(() => createSchema(options));
 
-  it('normalizes record ids and dates across the codec', async () => {
-    const options = { database: surrealAdapter({ db }) };
-    const adapter = surrealAdapter({ db })(options);
-    const now = new Date();
+      if (!schema) {
+        return yield* Effect.fail(
+          new Error('SurrealDB adapter did not provide a schema')
+        );
+      }
 
-    const created = await adapter.create<UserRow>({
-      model: 'user',
-      data: {
-        name: 'Probe',
-        email: 'codec@probe.test',
-        emailVerified: false,
-        createdAt: now,
-        updatedAt: now,
-      },
-    });
-    expect(created.id).toEqual(expect.any(String));
-    expect(created.id).not.toContain('user:');
-    expect(created.createdAt).toBeInstanceOf(Date);
+      yield* Effect.tryPromise(() => db.query(schema.code));
+      yield* Effect.tryPromise(() => db.query(schema.code));
+      const [info] = yield* Effect.tryPromise(() =>
+        db.query<[{ tables: Record<string, string> }]>('INFO FOR DB')
+      );
+      const statements = schema.code
+        .split('\n')
+        .filter((line) => line !== '' && !line.startsWith('--'));
 
-    const found = await adapter.findOne<UserRow>({
-      model: 'user',
-      where: [
-        {
-          field: 'id',
-          value: created.id,
-          operator: 'eq',
-          connector: 'AND',
-          mode: 'sensitive',
-        },
-      ],
-    });
-    expect(found?.email).toBe('codec@probe.test');
-  });
+      expect(statements.length).toBeGreaterThan(0);
+      expect(statements.every((line) => line.includes('IF NOT EXISTS'))).toBe(
+        true
+      );
+      expect(Object.keys(info?.tables ?? {})).toEqual(
+        expect.arrayContaining(['user', 'session', 'account', 'verification'])
+      );
+    })
+  );
 });

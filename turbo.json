@@ -1,11 +1,10 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
-  "globalDependencies": [".env", "tsconfig.json"],
+  "globalDependencies": ["apps/api/.env", "apps/web/.env", "tsconfig.json"],
   "globalEnv": [
     "NODE_ENV",
     "API_PORT",
     "WEB_PORT",
-    "FRONTEND_ORIGIN",
     "SURREAL_ENDPOINT",
     "SURREAL_NAMESPACE",
     "SURREAL_DATABASE",

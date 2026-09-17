@@ -7,14 +7,15 @@ A self-hosted pnpm/Turborepo starter with a pure SolidJS 2 client application an
 - Node.js **22.19 or newer**
 - pnpm **12.3.4**
 
-Install dependencies and create the local configuration:
+Install dependencies and create the local configuration files:
 
 ```sh
 pnpm install
-cp .env.example .env
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env
 ```
 
-Replace `BETTER_AUTH_SECRET` with a long random value, for example from `openssl rand -base64 32`.
+Replace `BETTER_AUTH_SECRET` in `apps/api/.env` with a long random value, for example from `openssl rand -base64 32`.
 
 ## Development
 
@@ -67,26 +68,30 @@ Better Auth owns `/api/auth/*`; application endpoints should not reimplement its
 
 ### Embedded SurrealDB
 
-`apps/api/src/runtime/db/index.ts` connects to the configured database and selects its namespace and database. The embedded store defaults to an absolute path under `apps/api/data`, so the database location does not change with the directory the process is started from. Runtime startup does not generate or apply schema.
+`apps/api/src/runtime/db/index.ts` connects to the configured database and selects its namespace and database. Runtime startup does not generate or apply schema.
 
-Better Auth's `auth migrate` command only supports its built-in Kysely adapter, so for the SurrealDB adapter the CLI can only emit DDL. Generate the deployment schema with the package script, then apply the ignored artifact with your deployment tooling:
+Better Auth's `auth migrate` command only supports its built-in Kysely adapter, so for the SurrealDB adapter the CLI can only emit DDL. Apply the schema with the package script:
 
 ```sh
-pnpm --filter api db:generate
+pnpm --filter api db:migrate
 ```
 
-The output is `apps/api/data/auth-schema.surql`. Apply it with deployment tooling rather than at startup, so schema changes are reviewed, versioned, and applied once instead of racing across restarted instances. Tests initialize the adapter schema directly against `mem://`.
-
-Run the command through the package script: `auth generate` resolves `--config` and `--output` against the working directory, and pnpm pins that to `apps/api`.
+The script derives the DDL from the adapter and applies it to the configured database. Apply schema during deployment rather than at startup, so changes are applied once instead of racing across restarted instances. Tests initialize the adapter schema directly against `mem://`.
 
 ## Environment variables
+
+Web variables belong in `apps/web/.env`:
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `WEB_PORT` | `5173` | Web development/preview port |
+
+API variables belong in `apps/api/.env`:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
 | `API_PORT` | `3000` | Effect HTTP server port |
-| `FRONTEND_ORIGIN` | `http://localhost:5173` | Exact browser origin trusted by Better Auth |
-| `SURREAL_ENDPOINT` | `surrealkv://<apps/api>/data` | Absolute embedded store path; use `mem://` for ephemeral runs. Relative values resolve against the working directory |
+| `SURREAL_ENDPOINT` | `mem://` | Database endpoint; defaults to ephemeral `mem://`; use an absolute SurrealKV path or managed endpoint in production. |
 | `SURREAL_NAMESPACE` | `app` | SurrealDB namespace |
 | `SURREAL_DATABASE` | `app` | SurrealDB database |
 | `BETTER_AUTH_SECRET` | — | Better Auth signing secret |
@@ -116,4 +121,4 @@ pnpm build
 
 `apps/web/dist` is a static SPA. Serve it with a real static host configured to fall back unknown page routes to `index.html`; Vite preview (`pnpm preview`) is only a local inspection tool for the built assets and must not be used as a production web server. `apps/api/dist/server.js` is the Node backend, started by `pnpm start` (or `pnpm --filter api start`); production supervisors may instead run and scale the two processes separately.
 
-Use an absolute `SURREAL_ENDPOINT` or managed SurrealDB endpoint in production, route `/api` to the Effect server, and set `FRONTEND_ORIGIN` and `BETTER_AUTH_URL` to the public site origin.
+Use an absolute `SURREAL_ENDPOINT` or managed SurrealDB endpoint in production, route `/api` to the Effect server, and set `BETTER_AUTH_URL` to the public site origin.
