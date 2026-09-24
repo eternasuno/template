@@ -16,14 +16,14 @@ export const authOptions = Effect.gen(function* () {
   const db = yield* Database;
   const authConfig = yield* Config.all({
     url: Config.URL('URL').pipe(
-      Config.withDefault(new URL('http://localhost:5173'))
+      Config.withDefault(new URL('http://localhost:3000'))
     ),
     secret: Config.Redacted('SECRET'),
   }).pipe(Config.nested('BETTER_AUTH'));
 
   return {
     appName: 'Solid Surreal API',
-    emailAndPassword: { enabled: true },
+    emailAndPassword: { enabled: true, autoSignIn: false },
     telemetry: { enabled: false },
     baseURL: authConfig.url.toString(),
     secret: Redacted.value(authConfig.secret),

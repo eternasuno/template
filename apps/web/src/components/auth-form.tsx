@@ -49,7 +49,11 @@ export const AuthFormField = (props: AuthFormFieldProps) => {
 
 export const FormError = (props: { message: string }) => (
   <Show when={props.message}>
-    <p class="alert alert-error py-2 text-sm" role="alert" aria-live="assertive">
+    <p
+      class="alert alert-error py-2 text-sm"
+      role="alert"
+      aria-live="assertive"
+    >
       {props.message}
     </p>
   </Show>
@@ -74,7 +78,9 @@ export const AuthFormView = <T extends { [K in keyof T]: string }>(
             value={props.auth.form()[field.id as keyof T]}
             error={props.auth.fieldErrors()[field.id as keyof T]}
             required
-            onInput={(value) => props.auth.updateField(field.id as keyof T, value)}
+            onInput={(value) =>
+              props.auth.updateField(field.id as keyof T, value)
+            }
           />
         )}
       </For>

@@ -1,5 +1,5 @@
 import { useNavigate } from '@solidjs/router';
-import { createEffect, createSignal, onCleanup, Show } from 'solid-js';
+import { createSignal, createTrackedEffect, onCleanup, Show } from 'solid-js';
 import { FormError } from '../components/auth-form';
 import { authClient } from '../lib/auth-client';
 
@@ -78,7 +78,9 @@ const SessionErrorCard = (props: { session: SessionState }) => (
   <div class="card card-border w-full max-w-sm bg-base-100 shadow-xl">
     <div class="card-body">
       <h1 class="card-title text-error">Unable to load your session</h1>
-      <FormError message={props.session.error?.message ?? 'Failed to load your session.'} />
+      <FormError
+        message={props.session.error?.message ?? 'Failed to load your session.'}
+      />
       <div class="card-actions justify-end">
         <button
           type="button"
@@ -94,23 +96,32 @@ const SessionErrorCard = (props: { session: SessionState }) => (
 
 const Home = () => {
   const navigate = useNavigate();
-  const [session, setSession] = createSignal<SessionState>(authClient.useSession.get());
+  const [session, setSession] = createSignal<SessionState>(
+    authClient.useSession.get()
+  );
   const { logout, loggingOut, logoutError } = useLogout();
 
-  onCleanup(authClient.useSession.subscribe(setSession));
+  let unsubscribe: (() => void) | undefined;
+  let disposed = false;
 
-  createEffect(
-    () => {
-      const current = session();
+  onCleanup(() => {
+    disposed = true;
+    unsubscribe?.();
+  });
 
-      return !current.isPending && !current.data && !current.error;
-    },
-    (shouldRedirect) => {
-      if (shouldRedirect) {
-        navigate('/login', { replace: true });
-      }
+  queueMicrotask(() => {
+    if (!disposed) {
+      unsubscribe = authClient.useSession.subscribe(setSession);
     }
-  );
+  });
+
+  createTrackedEffect(() => {
+    const current = session();
+
+    if (!current.isPending && !current.data && !current.error) {
+      navigate('/login', { replace: true });
+    }
+  });
 
   return (
     <main class="flex min-h-screen items-center justify-center bg-base-200 p-4">

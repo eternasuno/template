@@ -1,16 +1,5 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
-  "globalDependencies": ["apps/api/.env", "apps/web/.env", "tsconfig.json"],
-  "globalEnv": [
-    "NODE_ENV",
-    "API_PORT",
-    "WEB_PORT",
-    "SURREAL_ENDPOINT",
-    "SURREAL_NAMESPACE",
-    "SURREAL_DATABASE",
-    "BETTER_AUTH_URL"
-  ],
-  "globalPassThroughEnv": ["BETTER_AUTH_SECRET"],
   "tasks": {
     "dev": {
       "cache": false,
@@ -24,9 +13,11 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".output/**"]
     },
-    "typecheck": {
-      "dependsOn": ["^typecheck"],
-      "outputs": []
+    "check": {
+      "dependsOn": ["^check"]
+    },
+    "check:fix": {
+      "dependsOn": ["^check:fix"]
     },
     "test": {
       "outputs": []

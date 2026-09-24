@@ -6,7 +6,7 @@ import { AppLive } from './app';
 import { AuthLive } from './runtime/auth';
 import { DatabaseLive } from './runtime/db';
 
-const DEFAULT_PORT = 3000;
+const DEFAULT_PORT = 3001;
 
 const server = NodeHttpServer.layerConfig(createServer, {
   port: Config.Port('API_PORT').pipe(Config.withDefault(DEFAULT_PORT)),

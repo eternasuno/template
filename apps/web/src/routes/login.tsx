@@ -1,5 +1,9 @@
 import { useNavigate } from '@solidjs/router';
-import { AuthFormView, AuthPage, type AuthFieldSpec } from '../components/auth-form';
+import {
+  type AuthFieldSpec,
+  AuthFormView,
+  AuthPage,
+} from '../components/auth-form';
 import { authClient } from '../lib/auth-client';
 import { useAuthForm } from '../lib/auth-form';
 
@@ -53,7 +57,12 @@ const Login = () => {
 
   return (
     <AuthPage title="Sign in">
-      <AuthFormView auth={auth} fields={FIELDS} submitLabel="Sign in" pendingLabel="Signing in…" />
+      <AuthFormView
+        auth={auth}
+        fields={FIELDS}
+        submitLabel="Sign in"
+        pendingLabel="Signing in…"
+      />
       <p class="text-center text-sm">
         Don&apos;t have an account?{' '}
         <a href="/register" class="link link-primary">

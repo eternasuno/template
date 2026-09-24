@@ -1,4 +1,4 @@
-import { createSignal, type Accessor, type Setter } from 'solid-js';
+import { type Accessor, createSignal, type Setter } from 'solid-js';
 
 export type FieldErrors<T extends { [K in keyof T]: string }> = Partial<
   Record<keyof T, string>
@@ -57,5 +57,12 @@ export const useAuthForm = <T extends { [K in keyof T]: string }>(
     }
   };
 
-  return { form, fieldErrors, formError, submitting, updateField, handleSubmit };
+  return {
+    form,
+    fieldErrors,
+    formError,
+    submitting,
+    updateField,
+    handleSubmit,
+  };
 };

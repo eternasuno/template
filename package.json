@@ -10,18 +10,17 @@
     "node": ">=22.19.0"
   },
   "scripts": {
-    "dev": "turbo run dev",
     "build": "turbo run build",
+    "check": "biome check",
+    "check:fix": "biome check --fix",
+    "dev": "turbo run dev",
+    "prepare": "effect-tsgo patch",
     "start": "turbo run start",
-    "preview": "pnpm --filter web preview",
-    "typecheck": "turbo run typecheck",
-    "test": "turbo run test",
-    "lint": "biome lint .",
-    "format": "biome format --write .",
-    "check": "biome check . && turbo typecheck"
+    "test": "turbo run test"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.12",
+    "@effect/tsgo": "^0.45.0",
     "@types/node": "26.5.0",
     "turbo": "2.10.12",
     "typescript": "7.0.2"

@@ -12,8 +12,7 @@ export const authRoutes = HttpRouter.add('*', '/api/auth/*', (request) =>
     const webRequest = yield* HttpServerRequest.toWeb(request);
     const response = yield* Effect.tryPromise({
       try: () => auth.handler(webRequest),
-      catch: (cause) =>
-        new AuthUnavailable({ cause }),
+      catch: (cause) => new AuthUnavailable({ cause }),
     });
 
     return HttpServerResponse.fromWeb(response);

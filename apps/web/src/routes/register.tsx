@@ -1,5 +1,9 @@
 import { useNavigate } from '@solidjs/router';
-import { AuthFormView, AuthPage, type AuthFieldSpec } from '../components/auth-form';
+import {
+  type AuthFieldSpec,
+  AuthFormView,
+  AuthPage,
+} from '../components/auth-form';
 import { authClient } from '../lib/auth-client';
 import { useAuthForm } from '../lib/auth-form';
 
@@ -62,7 +66,7 @@ const Register = () => {
         throw new Error(error.message ?? 'Registration failed.');
       }
 
-      navigate('/');
+      navigate('/login');
     },
   });
 

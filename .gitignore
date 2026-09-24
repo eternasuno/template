@@ -62,3 +62,11 @@ Thumbs.db
 
 # Crash dumps from embedded DB experiments
 /core
+
+# Devenv
+.devenv*
+devenv.local.nix
+devenv.local.yaml
+
+# direnv
+.direnv

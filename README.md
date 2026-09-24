@@ -25,8 +25,8 @@ pnpm dev
 
 By default:
 
-- Web SPA: `http://localhost:5173`
-- Effect API: `http://localhost:3000`
+- Web SPA: `http://localhost:3000`
+- Effect API: `http://localhost:3001`
 
 Both applications run as independent Turborepo tasks. Vite proxies `/api` to the Effect server during development and preview, so browser authentication remains same-origin without API CORS middleware.
 
@@ -36,13 +36,19 @@ Both applications run as independent Turborepo tasks. Vite proxies `/api` to the
 pnpm dev        # run the web and API development servers
 pnpm build      # build both applications
 pnpm start      # run the built API server
-pnpm preview    # locally preview the built web SPA with Vite
-pnpm typecheck  # type-check every workspace package
 pnpm test       # run all Vitest suites
-pnpm lint       # lint with Biome
-pnpm format     # format files with Biome
-pnpm check      # Biome checks plus workspace type-checking
+pnpm check      # run Biome checks
+pnpm check:fix  # run Biome checks and apply fixes
 ```
+
+## Project guidance
+
+Maintainers should read [`AGENTS.md`](AGENTS.md) first, then read the relevant project skill for the task:
+
+- [`project-architecture`](.agents/skills/project-architecture/SKILL.md) — architecture, browser/API boundaries, session subscriptions, or deployment topology.
+- [`project-effect-api`](.agents/skills/project-effect-api/SKILL.md) — Better Auth, sessions, protected APIs, Effect services, or Layer composition.
+- [`project-database`](.agents/skills/project-database/SKILL.md) — SurrealDB/SurrealKV, schema migrations, or database deployment configuration.
+- [`project-testing`](.agents/skills/project-testing/SKILL.md) — tests, test doubles, Effect Layers, or in-memory database schema setup.
 
 ## Architecture
 
@@ -84,18 +90,18 @@ Web variables belong in `apps/web/.env`:
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `WEB_PORT` | `5173` | Web development/preview port |
+| `WEB_PORT` | `3000` | Web development/preview port |
 
 API variables belong in `apps/api/.env`:
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `API_PORT` | `3000` | Effect HTTP server port |
+| `API_PORT` | `3001` | Effect HTTP server port |
 | `SURREAL_ENDPOINT` | `mem://` | Database endpoint; defaults to ephemeral `mem://`; use an absolute SurrealKV path or managed endpoint in production. |
 | `SURREAL_NAMESPACE` | `app` | SurrealDB namespace |
 | `SURREAL_DATABASE` | `app` | SurrealDB database |
 | `BETTER_AUTH_SECRET` | — | Better Auth signing secret |
-| `BETTER_AUTH_URL` | `http://localhost:5173` | Canonical public site origin used for auth URLs |
+| `BETTER_AUTH_URL` | `http://localhost:3000` | Canonical public site origin used for auth URLs |
 
 Deploy the frontend and `/api` on the same public origin. In development and preview, Vite provides the `/api` proxy.
 
@@ -119,6 +125,6 @@ Build both applications:
 pnpm build
 ```
 
-`apps/web/dist` is a static SPA. Serve it with a real static host configured to fall back unknown page routes to `index.html`; Vite preview (`pnpm preview`) is only a local inspection tool for the built assets and must not be used as a production web server. `apps/api/dist/server.js` is the Node backend, started by `pnpm start` (or `pnpm --filter api start`); production supervisors may instead run and scale the two processes separately.
+`apps/web/dist` is a static SPA. Serve it with a real static host configured to fall back unknown page routes to `index.html`; it must not be used as a production web server. `apps/api/dist/server.js` is the Node backend, started by `pnpm start` (or `pnpm --filter api start`); production supervisors may instead run and scale the two processes separately.
 
 Use an absolute `SURREAL_ENDPOINT` or managed SurrealDB endpoint in production, route `/api` to the Effect server, and set `BETTER_AUTH_URL` to the public site origin.

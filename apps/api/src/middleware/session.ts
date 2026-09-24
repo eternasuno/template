@@ -28,8 +28,7 @@ export const currentUserMiddleware = HttpRouter.middleware<{
               headers: webRequest.headers,
               returnHeaders: true,
             }),
-          catch: (cause) =>
-            new AuthUnavailable({ cause }),
+          catch: (cause) => new AuthUnavailable({ cause }),
         });
         const response = session.response
           ? yield* Effect.provideService(handler, CurrentUser, {

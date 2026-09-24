@@ -13,7 +13,9 @@ export class Database extends Context.Service<Database, Surreal>()(
   'Database'
 ) {}
 
-export class DatabaseConnectError extends Data.TaggedError('DatabaseConnectError')<{
+export class DatabaseConnectError extends Data.TaggedError(
+  'DatabaseConnectError'
+)<{
   readonly endpoint: string;
   readonly cause: unknown;
 }> {}

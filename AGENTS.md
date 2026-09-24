@@ -4,29 +4,16 @@
 
 Self-hosted starter with a pure SolidJS 2 SPA and a separate Effect HttpServer API using Better Auth and embedded SurrealDB/SurrealKV. It is a pnpm workspace managed with Turborepo.
 
-## Structure
+## Project skills
 
-- `apps/web/src/routes`: browser-rendered filesystem routes.
-- `apps/web/src/components`: shared browser UI.
-- `apps/web/src/lib`: Better Auth client and credentialed API clients.
-- `apps/api/src/routes`: Effect HTTP routes; Better Auth owns `/api/auth/*`.
-- `apps/api/src/runtime`: Effect layers for Better Auth and SurrealDB plus the DB codec.
-- `apps/api/src/middleware`: request middleware.
-- `apps/api/test`: backend Vitest tests; initialize `mem://` by calling the SurrealDB adapter's `createSchema` directly.
-- `apps/api/src/migrate.ts`: one-off schema migration entry point, run via `db:migrate`.
+Read the relevant skill first when the task involves:
 
-## Boundaries
-
-- Keep `apps/web` browser-only. It must not import `apps/api`, Effect server modules, database clients, embedded engines, secrets, or Better Auth server configuration.
-- The web app uses client rendering and HTTP APIs; add no SSR or server functions.
-- Derive identity from the backend request session; never trust a client-supplied user ID.
-- Protect API operations with `currentUserMiddleware`; derive identity from `CurrentUser`.
-- Better Auth owns `/api/auth/*`; internal application operations use Effect HTTP routes.
-- Runtime startup connects to SurrealDB but does not generate or apply schema.
+- [`project-architecture`](.agents/skills/project-architecture/SKILL.md) — SolidJS routes or components, browser/API boundaries, frontend session subscriptions, or deployment topology.
+- [`project-effect-api`](.agents/skills/project-effect-api/SKILL.md) — Better Auth paths, session identity, protected APIs, Effect services, or Layer composition.
+- [`project-database`](.agents/skills/project-database/SKILL.md) — SurrealDB/SurrealKV runtime connections, Better Auth schema migrations, or database deployment configuration.
+- [`project-testing`](.agents/skills/project-testing/SKILL.md) — tests, test doubles, Effect Layer assembly, or in-memory database schema initialization.
 
 ## Workflow
 
-- Apply the Better Auth schema with `pnpm --filter api db:migrate`; the script derives DDL from the adapter and applies it directly.
-- Keep package tests under each app's `test` directory.
-- Before finishing changes, run `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build`.
-- Read `README.md` for setup, environment variables, routes, and deployment details.
+- Treat `README.md` as the source of truth for setup, commands, environment variables, routes, and deployment details.
+- Before finishing changes, run `pnpm check`, `pnpm test`, and `pnpm build`.
