@@ -33,6 +33,11 @@ export const useAuthForm = <T extends { [K in keyof T]: string }>(
 
   const updateField = (field: keyof T, value: string) => {
     setForm((current) => ({ ...current, [field]: value }) as T);
+    setFieldErrors((current) => {
+      const { [field]: _fieldError, ...remainingErrors } = current;
+
+      return remainingErrors as FieldErrors<T>;
+    });
   };
 
   const handleSubmit = async (event: Event) => {

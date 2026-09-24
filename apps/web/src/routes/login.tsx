@@ -63,9 +63,12 @@ const Login = () => {
         submitLabel="Sign in"
         pendingLabel="Signing in…"
       />
-      <p class="text-center text-sm">
+      <p class="text-center text-xs text-[#5e6662]">
         Don&apos;t have an account?{' '}
-        <a href="/register" class="link link-primary">
+        <a
+          href="/register"
+          class="link font-semibold text-[#0f764a] hover:text-[#0c623d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f764a] focus-visible:ring-offset-2 rounded"
+        >
           Create one
         </a>
       </p>

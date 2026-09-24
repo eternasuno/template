@@ -9,7 +9,7 @@
     "check:fix": "tsc --noEmit && biome check --fix",
     "dev": "vite",
     "preview": "vite preview",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run"
   },
   "dependencies": {
     "@solidjs/router": "2.0.0-next.21",
