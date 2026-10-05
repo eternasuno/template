@@ -1,6 +1,6 @@
 import { expect, it } from '@effect/vitest';
 import { ConfigProvider, Effect, Layer } from 'effect';
-import { HttpRouter, HttpServerResponse } from 'effect/unstable/http';
+import { HttpRouter, HttpServerResponse } from 'effect/http';
 import {
   CurrentUser,
   currentUserMiddleware,

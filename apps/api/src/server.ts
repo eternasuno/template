@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 import { NodeHttpServer, NodeRuntime } from '@effect/platform-node';
 import { Config, Layer } from 'effect';
-import { HttpRouter } from 'effect/unstable/http';
+import { HttpRouter } from 'effect/http';
 import { AppLive } from './app';
 import { AuthLive } from './runtime/auth';
 import { DatabaseLive } from './runtime/db';

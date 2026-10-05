@@ -4,7 +4,7 @@ import {
   HttpRouter,
   HttpServerRequest,
   HttpServerResponse,
-} from 'effect/unstable/http';
+} from 'effect/http';
 import { Auth, AuthUnavailable } from '../runtime/auth';
 
 export class CurrentUser extends Context.Service<

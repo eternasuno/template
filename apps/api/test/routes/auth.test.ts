@@ -1,6 +1,6 @@
 import { expect, it } from '@effect/vitest';
 import { Effect, Layer } from 'effect';
-import { HttpRouter } from 'effect/unstable/http';
+import { HttpRouter } from 'effect/http';
 import { authRoutes } from '../../src/routes/auth';
 import { Auth } from '../../src/runtime/auth';
 

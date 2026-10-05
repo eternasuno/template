@@ -13,11 +13,10 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".output/**"]
     },
-    "check": {
-      "dependsOn": ["^check"]
-    },
-    "check:fix": {
-      "dependsOn": ["^check:fix"]
+    "typecheck": {
+      "dependsOn": ["^typecheck"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/tsconfig.json"],
+      "outputs": []
     },
     "test": {
       "outputs": []

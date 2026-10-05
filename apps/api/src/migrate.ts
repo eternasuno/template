@@ -1,7 +1,11 @@
 import { NodeRuntime } from '@effect/platform-node';
-import { Effect, Runtime } from 'effect';
+import { Data, Effect, Runtime } from 'effect';
 import { authOptions } from './runtime/auth.ts';
 import { Database, DatabaseLive } from './runtime/db';
+
+export class SchemaUnsupported extends Data.TaggedError('SchemaUnsupported')<{
+  message: string;
+}> {}
 
 export const migrate = Effect.gen(function* () {
   const db = yield* Database;
@@ -9,9 +13,9 @@ export const migrate = Effect.gen(function* () {
   const createSchema = options.database(options).createSchema;
 
   if (createSchema === undefined) {
-    return yield* Effect.fail(
-      new Error('The auth adapter does not support schema generation')
-    );
+    return yield* new SchemaUnsupported({
+      message: 'The auth adapter does not support schema generation',
+    });
   }
 
   return yield* Effect.tryPromise(async () => {

@@ -4,7 +4,13 @@
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "lib": ["ESNext"],
-    "types": ["node"]
+    "types": ["node"],
+    "plugins": [
+      {
+        "name": "@effect/language-service",
+        "allowedUnstableApis": ["effect/http"]
+      }
+    ]
   },
   "include": ["src", "test", "vite.config.ts"]
 }

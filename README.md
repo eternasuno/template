@@ -39,6 +39,7 @@ pnpm start      # run the built API server
 pnpm test       # run all Vitest suites
 pnpm check      # run Biome checks
 pnpm check:fix  # run Biome checks and apply fixes
+pnpm typecheck  # run TypeScript checks for both applications
 ```
 
 ## Project guidance
