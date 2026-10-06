@@ -1,53 +1,16 @@
 import { useNavigate } from '@solidjs/router';
-import {
-  type AuthFieldSpec,
-  AuthFormView,
-  AuthPage,
-} from '../components/auth-form';
+import { type AuthFieldSpec, AuthFormView } from '../components/auth-form';
+import { AuthPage } from '../components/auth-page';
 import { authClient } from '../lib/auth-client';
 import { useAuthForm } from '../lib/auth-form';
+import { type NewAccount, validateNewAccount } from '../lib/auth-validation';
 
-const MIN_PASSWORD_LENGTH = 8;
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-const FIELDS: readonly AuthFieldSpec[] = [
+const FIELDS: readonly AuthFieldSpec<keyof NewAccount>[] = [
   { id: 'name', label: 'Name', type: 'text' },
   { id: 'email', label: 'Email', type: 'email' },
   { id: 'password', label: 'Password', type: 'password' },
   { id: 'confirm', label: 'Confirm password', type: 'password' },
 ];
-
-type NewAccount = {
-  name: string;
-  email: string;
-  password: string;
-  confirm: string;
-};
-
-const validateNewAccount = (values: NewAccount) => {
-  const errors: Partial<Record<keyof NewAccount, string>> = {};
-
-  if (values.name.trim() === '') {
-    errors.name = 'Name is required.';
-  }
-
-  if (values.email.trim() === '') {
-    errors.email = 'Email is required.';
-  } else if (!EMAIL_REGEX.test(values.email.trim())) {
-    errors.email = 'Please enter a valid email address.';
-  }
-
-  if (values.password.length < MIN_PASSWORD_LENGTH) {
-    errors.password = `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
-  }
-
-  if (values.password !== values.confirm) {
-    errors.confirm = 'Passwords do not match.';
-  }
-
-  return errors;
-};
 
 const Register = () => {
   const navigate = useNavigate();

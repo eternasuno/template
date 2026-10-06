@@ -57,3 +57,26 @@ it('clears only the edited field error and submits once all fields are valid', a
     password: 'correct horse battery staple',
   });
 });
+
+it.each([
+  [new Error('Invalid credentials.'), 'Invalid credentials.'],
+  [new Error(''), 'Sign in failed.'],
+  ['Network failure', 'Sign in failed.'],
+])(
+  'reports submission errors and clears pending state',
+  async (error, message) => {
+    const auth = useAuthForm({
+      initial: { email: 'user@example.com', password: 'password' },
+      validate: validateCredentials,
+      fallbackError: 'Sign in failed.',
+      onValid: async () => {
+        throw error;
+      },
+    });
+
+    await auth.handleSubmit(submitEvent());
+
+    expect(auth.formError()).toBe(message);
+    expect(auth.submitting()).toBe(false);
+  }
+);

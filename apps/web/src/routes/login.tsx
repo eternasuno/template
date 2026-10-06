@@ -1,39 +1,14 @@
 import { useNavigate } from '@solidjs/router';
-import {
-  type AuthFieldSpec,
-  AuthFormView,
-  AuthPage,
-} from '../components/auth-form';
+import { type AuthFieldSpec, AuthFormView } from '../components/auth-form';
+import { AuthPage } from '../components/auth-page';
 import { authClient } from '../lib/auth-client';
 import { useAuthForm } from '../lib/auth-form';
+import { type Credentials, validateCredentials } from '../lib/auth-validation';
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-const FIELDS: readonly AuthFieldSpec[] = [
+const FIELDS: readonly AuthFieldSpec<keyof Credentials>[] = [
   { id: 'email', label: 'Email', type: 'email' },
   { id: 'password', label: 'Password', type: 'password' },
 ];
-
-type Credentials = {
-  email: string;
-  password: string;
-};
-
-const validateCredentials = (values: Credentials) => {
-  const errors: Partial<Record<keyof Credentials, string>> = {};
-
-  if (values.email.trim() === '') {
-    errors.email = 'Email is required.';
-  } else if (!EMAIL_REGEX.test(values.email.trim())) {
-    errors.email = 'Please enter a valid email address.';
-  }
-
-  if (values.password === '') {
-    errors.password = 'Password is required.';
-  }
-
-  return errors;
-};
 
 const Login = () => {
   const navigate = useNavigate();
