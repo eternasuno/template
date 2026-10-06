@@ -1,7 +1,7 @@
 import { expect, it } from '@effect/vitest';
 import { ConfigProvider, Effect, Layer } from 'effect';
-import { authOptions } from '../../src/runtime/auth';
-import { DatabaseLive } from '../../src/runtime/db';
+import { authOptions } from '../../src/infrastructure/auth';
+import { DatabaseLive } from '../../src/infrastructure/db';
 
 const TestConfigLive = ConfigProvider.layer(
   ConfigProvider.fromUnknown({

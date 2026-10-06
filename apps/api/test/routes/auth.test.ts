@@ -1,8 +1,8 @@
 import { expect, it } from '@effect/vitest';
 import { Effect, Layer } from 'effect';
 import { HttpRouter } from 'effect/http';
+import { Auth } from '../../src/infrastructure/auth';
 import { authRoutes } from '../../src/routes/auth';
-import { Auth } from '../../src/runtime/auth';
 
 const baseUrl = 'http://localhost:5173';
 

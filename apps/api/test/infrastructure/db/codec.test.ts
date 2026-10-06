@@ -1,6 +1,6 @@
 import { expect, it } from '@effect/vitest';
 import { RecordId, StringRecordId } from 'surrealdb';
-import { codecOptions } from '../../../src/runtime/db/codec';
+import { codecOptions } from '../../../src/infrastructure/db/codec';
 
 const encode = codecOptions.valueEncodeVisitor;
 const decode = codecOptions.valueDecodeVisitor;

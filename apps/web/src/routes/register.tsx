@@ -18,12 +18,12 @@ const FIELDS: readonly AuthFieldSpec[] = [
   { id: 'confirm', label: 'Confirm password', type: 'password' },
 ];
 
-interface NewAccount {
+type NewAccount = {
   name: string;
   email: string;
   password: string;
   confirm: string;
-}
+};
 
 const validateNewAccount = (values: NewAccount) => {
   const errors: Partial<Record<keyof NewAccount, string>> = {};

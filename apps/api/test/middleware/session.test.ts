@@ -1,12 +1,12 @@
 import { expect, it } from '@effect/vitest';
 import { ConfigProvider, Effect, Layer } from 'effect';
 import { HttpRouter, HttpServerResponse } from 'effect/http';
+import { AuthLive } from '../../src/infrastructure/auth';
+import { DatabaseLive } from '../../src/infrastructure/db';
 import {
   CurrentUser,
   currentUserMiddleware,
 } from '../../src/middleware/session';
-import { AuthLive } from '../../src/runtime/auth';
-import { DatabaseLive } from '../../src/runtime/db';
 
 const baseUrl = 'http://localhost:5173';
 

@@ -1,13 +1,13 @@
 import { For, type ParentProps, Show } from 'solid-js';
 import type { AuthForm } from '../lib/auth-form';
 
-export interface AuthFieldSpec {
+export type AuthFieldSpec = {
   id: string;
   label: string;
   type?: 'text' | 'email' | 'password';
-}
+};
 
-interface AuthFormFieldProps {
+type AuthFormFieldProps = {
   id: string;
   label: string;
   type?: 'text' | 'email' | 'password';
@@ -15,7 +15,7 @@ interface AuthFormFieldProps {
   error?: string | undefined;
   required?: boolean;
   onInput: (value: string) => void;
-}
+};
 
 export const AuthFormField = (props: AuthFormFieldProps) => {
   const handleInput = (event: InputEvent) => {
@@ -94,12 +94,12 @@ export const FormError = (props: { message: string }) => (
   </Show>
 );
 
-interface AuthFormViewProps<T extends { [K in keyof T]: string }> {
+type AuthFormViewProps<T extends { [K in keyof T]: string }> = {
   auth: AuthForm<T>;
   fields: readonly AuthFieldSpec[];
   submitLabel: string;
   pendingLabel: string;
-}
+};
 
 export const AuthFormView = <T extends { [K in keyof T]: string }>(
   props: AuthFormViewProps<T>

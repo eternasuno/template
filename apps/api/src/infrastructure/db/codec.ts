@@ -1,9 +1,9 @@
 import { type CodecOptions, RecordId, StringRecordId } from 'surrealdb';
 
-interface ForeignRecordId {
+type ForeignRecordId = {
   table: string | { name: string };
   id: string | number;
-}
+};
 
 const isForeignRecordId = (value: object): value is ForeignRecordId => {
   const proto = Object.getPrototypeOf(value);

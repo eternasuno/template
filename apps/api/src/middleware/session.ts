@@ -5,7 +5,7 @@ import {
   HttpServerRequest,
   HttpServerResponse,
 } from 'effect/http';
-import { Auth, AuthUnavailable } from '../runtime/auth';
+import { Auth, AuthUnavailable } from '../infrastructure/auth';
 
 export class CurrentUser extends Context.Service<
   CurrentUser,

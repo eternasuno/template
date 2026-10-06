@@ -3,11 +3,11 @@ import { Config, Context, Data, Effect, Layer } from 'effect';
 import { Surreal } from 'surrealdb';
 import { codecOptions } from './codec.ts';
 
-export interface DbConfig {
+export type DbConfig = {
   endpoint: string;
   namespace: string;
   database: string;
-}
+};
 
 export class Database extends Context.Service<Database, Surreal>()(
   'Database'
@@ -20,14 +20,14 @@ export class DatabaseConnectError extends Data.TaggedError(
   readonly cause: unknown;
 }> {}
 
-export const createSurreal = async (config: DbConfig): Promise<Surreal> => {
+export const createSurreal = (config: DbConfig): Promise<Surreal> => {
   const db = new Surreal({ engines: { ...createNodeEngines() }, codecOptions });
-  await db.connect(config.endpoint, {
-    namespace: config.namespace,
-    database: config.database,
-  });
-
-  return db;
+  return db
+    .connect(config.endpoint, {
+      namespace: config.namespace,
+      database: config.database,
+    })
+    .then(() => db);
 };
 
 export const DatabaseLive = Layer.effect(
@@ -38,7 +38,7 @@ export const DatabaseLive = Layer.effect(
       namespace: Config.String('NAMESPACE').pipe(Config.withDefault('app')),
       database: Config.String('DATABASE').pipe(Config.withDefault('app')),
     }).pipe(Config.nested('SURREAL'));
-    const db = yield* Effect.acquireRelease(
+    return yield* Effect.acquireRelease(
       Effect.tryPromise({
         try: () => createSurreal(config),
         catch: (cause) =>
@@ -46,7 +46,5 @@ export const DatabaseLive = Layer.effect(
       }),
       (db) => Effect.promise(() => db.close())
     );
-
-    return db;
   })
 );

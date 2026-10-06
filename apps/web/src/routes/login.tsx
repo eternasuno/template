@@ -14,10 +14,10 @@ const FIELDS: readonly AuthFieldSpec[] = [
   { id: 'password', label: 'Password', type: 'password' },
 ];
 
-interface Credentials {
+type Credentials = {
   email: string;
   password: string;
-}
+};
 
 const validateCredentials = (values: Credentials) => {
   const errors: Partial<Record<keyof Credentials, string>> = {};

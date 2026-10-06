@@ -4,21 +4,21 @@ export type FieldErrors<T extends { [K in keyof T]: string }> = Partial<
   Record<keyof T, string>
 >;
 
-export interface AuthForm<T extends { [K in keyof T]: string }> {
+export type AuthForm<T extends { [K in keyof T]: string }> = {
   form: Accessor<T>;
   fieldErrors: Accessor<FieldErrors<T>>;
   formError: Accessor<string>;
   submitting: Accessor<boolean>;
   updateField: (field: keyof T, value: string) => void;
   handleSubmit: (event: Event) => Promise<void>;
-}
+};
 
-interface AuthFormOptions<T extends { [K in keyof T]: string }> {
+type AuthFormOptions<T extends { [K in keyof T]: string }> = {
   initial: T;
   validate: (values: T) => FieldErrors<T>;
   fallbackError: string;
   onValid: (values: T) => Promise<void>;
-}
+};
 
 const objectSignal = <T extends object>(initial: T) =>
   createSignal(initial as object) as unknown as [Accessor<T>, Setter<T>];

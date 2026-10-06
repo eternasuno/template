@@ -1,10 +1,10 @@
 import { expect, it, vi } from 'vitest';
 import { useAuthForm } from '../../src/lib/auth-form';
 
-interface Credentials {
+type Credentials = {
   email: string;
   password: string;
-}
+};
 
 const validateCredentials = (values: Credentials) => {
   const errors: Partial<Record<keyof Credentials, string>> = {};

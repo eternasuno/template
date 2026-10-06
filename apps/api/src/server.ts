@@ -3,8 +3,8 @@ import { NodeHttpServer, NodeRuntime } from '@effect/platform-node';
 import { Config, Layer } from 'effect';
 import { HttpRouter } from 'effect/http';
 import { AppLive } from './app';
-import { AuthLive } from './runtime/auth';
-import { DatabaseLive } from './runtime/db';
+import { AuthLive } from './infrastructure/auth';
+import { DatabaseLive } from './infrastructure/db';
 
 const DEFAULT_PORT = 3001;
 

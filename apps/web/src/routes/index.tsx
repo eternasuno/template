@@ -47,12 +47,12 @@ const useLogout = () => {
   return { logout, loggingOut, logoutError };
 };
 
-interface SessionCardProps {
+type SessionCardProps = {
   session: SessionState;
   loggingOut: boolean;
   logoutError: string;
   onLogout: () => void;
-}
+};
 
 const SessionCard = (props: SessionCardProps) => (
   <div class="card card-border w-full max-w-2xl overflow-hidden rounded-2xl border border-[#e6dfd3] bg-[#ffffff] shadow-[0_20px_45px_-15px_rgba(20,25,23,0.07)]">

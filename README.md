@@ -64,7 +64,7 @@ Browser
 
 - `apps/web` contains browser-only routes, components, and the Better Auth client. Vite builds static assets with `ssr: false`; there are no server functions or server runtime modules.
 - `apps/api/src/routes` owns HTTP routing. Better Auth handles `/api/auth/*`.
-- `apps/api/src/runtime` holds the Effect layers for Better Auth and SurrealDB; `apps/api/src/app.ts` composes them into the HTTP `AppLive`, and `apps/api/src/server.ts` is the process entry that launches it. The server entry owns layer acquisition and graceful shutdown via `NodeRuntime`.
+- `apps/api/src/infrastructure` holds the Effect layers for Better Auth and SurrealDB; `apps/api/src/app.ts` composes them into the HTTP `AppLive`, and `apps/api/src/server.ts` is the process entry that launches it. The server entry owns layer acquisition and graceful shutdown via `NodeRuntime`.
 - `apps/api/test` tests the database, the authentication protocol, and HTTP handlers against `mem://`.
 
 ### Security boundaries
@@ -75,7 +75,7 @@ Better Auth owns `/api/auth/*`; application endpoints should not reimplement its
 
 ### Embedded SurrealDB
 
-`apps/api/src/runtime/db/index.ts` connects to the configured database and selects its namespace and database. Runtime startup does not generate or apply schema.
+`apps/api/src/infrastructure/db/index.ts` connects to the configured database and selects its namespace and database. Runtime startup does not generate or apply schema.
 
 Better Auth's `auth migrate` command only supports its built-in Kysely adapter, so for the SurrealDB adapter the CLI can only emit DDL. Apply the schema with the package script:
 

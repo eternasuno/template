@@ -9,7 +9,10 @@ description: Follow the client architecture and resource-lifecycle constraints w
 - The project is a pure client-side SolidJS 2 SPA with a separate Effect HttpServer API; the browser accesses the API through credentialed HTTP requests.
 - Keep `apps/web` limited to browser routes, components, the Better Auth client, and the API client; preserve client rendering.
 - Do not introduce `apps/api`, Effect server modules, database clients, embedded engines, secrets, or Better Auth server configuration into web; do not add SSR or server functions.
-- API HTTP routes belong in `apps/api/src/routes`, runtime Layers and database capabilities in `apps/api/src/runtime`, and request middleware in `apps/api/src/middleware`; place server capabilities according to these responsibilities and do not move them into web.
+- API HTTP routes belong in `apps/api/src/routes`, runtime Layers and database capabilities in `apps/api/src/infrastructure`, and request middleware in `apps/api/src/middleware`; place server capabilities according to these responsibilities and do not move them into web.
+- Use `type` aliases for ordinary TypeScript data shapes and contracts. Preserve Effect Service classes and runtime classes such as `Data.TaggedError` constructors.
+- Keep shared Effect language-service settings in the root `tsconfig.json`; let app configs inherit them rather than duplicate the plugin array. Use app overrides only for genuinely app-specific settings.
+
 ## Solid Session Subscription
 
 `authClient.useSession.subscribe` invokes its callback synchronously. When subscribing inside a Solid owned scope:

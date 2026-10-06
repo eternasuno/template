@@ -1,6 +1,6 @@
 import { Effect } from 'effect';
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from 'effect/http';
-import { Auth, AuthUnavailable } from '../runtime/auth';
+import { Auth, AuthUnavailable } from '../infrastructure/auth';
 
 export const authRoutes = HttpRouter.add('*', '/api/auth/*', (request) =>
   Effect.gen(function* () {
