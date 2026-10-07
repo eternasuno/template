@@ -46,6 +46,12 @@ export default defineConfig(({ mode }) => {
     },
     test: {
       environment: 'node',
+      alias: {
+        'solid-js': new URL(
+          './dist/solid.dev.js',
+          import.meta.resolve('solid-js/package.json')
+        ).pathname,
+      },
     },
   };
 });

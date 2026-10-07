@@ -1,5 +1,5 @@
 import { useNavigate } from '@solidjs/router';
-import { createTrackedEffect, Show } from 'solid-js';
+import { createEffect, Show } from 'solid-js';
 import {
   SessionCard,
   SessionErrorCard,
@@ -10,29 +10,29 @@ import { useLogout, useSession } from '../lib/session';
 const Home = () => {
   const navigate = useNavigate();
   const session = useSession();
-  const { logout, loggingOut, logoutError } = useLogout();
+  const logout = useLogout();
 
-  createTrackedEffect(() => {
-    const current = session();
+  createEffect(
+    () => {
+      const current = session();
 
-    if (!current.isPending && !current.data && !current.error) {
-      navigate('/login', { replace: true });
+      return !current.isPending && !current.data && !current.error;
+    },
+    (signedOut) => {
+      if (signedOut) {
+        navigate('/login', { replace: true });
+      }
     }
-  });
+  );
 
   return (
-    <main class="relative flex min-h-screen w-full items-center justify-center bg-[#faf8f5] px-4 py-8 sm:px-6 lg:px-8">
+    <main class="flex min-h-screen items-center justify-center p-4">
       <Show when={!session().isPending} fallback={<SessionLoading />}>
         <Show
           when={!session().error}
           fallback={<SessionErrorCard session={session()} />}
         >
-          <SessionCard
-            session={session()}
-            loggingOut={loggingOut()}
-            logoutError={logoutError()}
-            onLogout={() => void logout()}
-          />
+          <SessionCard session={session()} onLogout={logout} />
         </Show>
       </Show>
     </main>

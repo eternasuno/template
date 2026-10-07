@@ -29,29 +29,20 @@ export const useSession = () => {
 
 export const useLogout = () => {
   const navigate = useNavigate();
-  const [loggingOut, setLoggingOut] = createSignal(false);
-  const [logoutError, setLogoutError] = createSignal('');
 
-  const logout = async () => {
-    setLogoutError('');
-    setLoggingOut(true);
+  return async () => {
+    let result: Awaited<ReturnType<typeof authClient.signOut>>;
 
     try {
-      const { error } = await authClient.signOut();
-
-      if (error) {
-        setLogoutError(error.message ?? 'Sign out failed.');
-
-        return;
-      }
-
-      navigate('/login');
+      result = await authClient.signOut();
     } catch {
-      setLogoutError('Sign out failed. Please try again.');
-    } finally {
-      setLoggingOut(false);
+      throw new Error('Sign out failed. Please try again.');
     }
-  };
 
-  return { logout, loggingOut, logoutError };
+    if (result.error) {
+      throw new Error(result.error.message ?? 'Sign out failed.');
+    }
+
+    navigate('/login');
+  };
 };

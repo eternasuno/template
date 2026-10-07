@@ -1,73 +1,89 @@
-import { type Accessor, createSignal, type Setter } from 'solid-js';
+import { createSignal, onCleanup } from 'solid-js';
 
-export type FieldErrors<T extends { [K in keyof T]: string }> = Partial<
-  Record<keyof T, string>
->;
+export const createAuthAction = () => {
+  const [pending, setPending] = createSignal(false);
+  const [error, setError] = createSignal('');
+  let running = false;
+  let disposed = false;
 
-export type AuthForm<T extends { [K in keyof T]: string }> = {
-  form: Accessor<T>;
-  fieldErrors: Accessor<FieldErrors<T>>;
-  formError: Accessor<string>;
-  submitting: Accessor<boolean>;
-  updateField: (field: keyof T, value: string) => void;
-  handleSubmit: (event: Event) => Promise<void>;
-};
+  onCleanup(() => {
+    disposed = true;
+  });
 
-type AuthFormOptions<T extends { [K in keyof T]: string }> = {
-  initial: T;
-  validate: (values: T) => FieldErrors<T>;
-  fallbackError: string;
-  onValid: (values: T) => Promise<void>;
-};
-
-const objectSignal = <T extends object>(initial: T) =>
-  createSignal(initial as object) as unknown as [Accessor<T>, Setter<T>];
-
-export const useAuthForm = <T extends { [K in keyof T]: string }>(
-  options: AuthFormOptions<T>
-): AuthForm<T> => {
-  const [form, setForm] = objectSignal(options.initial);
-  const [fieldErrors, setFieldErrors] = objectSignal({} as FieldErrors<T>);
-  const [formError, setFormError] = createSignal('');
-  const [submitting, setSubmitting] = createSignal(false);
-
-  const updateField = (field: keyof T, value: string) => {
-    setForm((current) => ({ ...current, [field]: value }) as T);
-    setFieldErrors((current) => {
-      const { [field]: _fieldError, ...remainingErrors } = current;
-
-      return remainingErrors as FieldErrors<T>;
-    });
-  };
-
-  const handleSubmit = async (event: Event) => {
-    event.preventDefault();
-    setFormError('');
-    const errors = options.validate(form());
-    setFieldErrors(() => errors);
-
-    if (Object.keys(errors).length > 0) {
+  const reportError = (cause: unknown, fallbackError: string) => {
+    if (disposed) {
       return;
     }
 
-    setSubmitting(true);
+    const message = cause instanceof Error ? cause.message : '';
+    setError(message || fallbackError);
+  };
+
+  const run = async (operation: () => Promise<void>, fallbackError: string) => {
+    if (running || disposed) {
+      return;
+    }
+
+    running = true;
+    setPending(true);
+    setError('');
 
     try {
-      await options.onValid(form());
-    } catch (error) {
-      const message = error instanceof Error ? error.message : '';
-      setFormError(message || options.fallbackError);
+      await operation();
+    } catch (cause) {
+      reportError(cause, fallbackError);
     } finally {
-      setSubmitting(false);
+      running = false;
+
+      if (!disposed) {
+        setPending(false);
+      }
     }
   };
 
-  return {
-    form,
-    fieldErrors,
-    formError,
-    submitting,
-    updateField,
-    handleSubmit,
-  };
+  return { pending, error, run };
+};
+
+export const readFormField = (data: FormData, name: string) => {
+  const value = data.get(name);
+
+  if (typeof value !== 'string') {
+    throw new Error(`Invalid ${name} field.`);
+  }
+
+  return value;
+};
+
+export const updatePasswordConfirmation = (
+  password: string,
+  confirm: HTMLInputElement
+) => {
+  const matches = password === confirm.value;
+  confirm.setCustomValidity(
+    confirm.value && !matches ? 'Passwords do not match.' : ''
+  );
+
+  return matches;
+};
+
+export const updateFormPasswordConfirmation = (form: HTMLFormElement) => {
+  const password = form.elements.namedItem('password') as HTMLInputElement;
+  const confirm = form.elements.namedItem('confirm') as HTMLInputElement | null;
+
+  if (confirm) {
+    updatePasswordConfirmation(password.value, confirm);
+  }
+};
+
+export const submitAuthForm = async (
+  form: HTMLFormElement,
+  onSubmit: (data: FormData) => Promise<void>
+) => {
+  updateFormPasswordConfirmation(form);
+
+  if (!form.checkValidity()) {
+    return;
+  }
+
+  await onSubmit(new FormData(form));
 };
