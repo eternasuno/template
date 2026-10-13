@@ -1,6 +1,6 @@
 # Solid Effect Starter
 
-A self-hosted pnpm/Turborepo starter with a pure SolidJS 2 client application and a separate Effect HTTP API backed by Better Auth and embedded SurrealDB/SurrealKV. The UI uses Tailwind CSS v4 and DaisyUI v5.
+A self-hosted pnpm/Turborepo starter with a pure SolidJS 1 client application and a separate Effect HTTP API backed by Better Auth and embedded SurrealDB/SurrealKV. The UI uses Tailwind CSS v4 and DaisyUI v5.
 
 ## Prerequisites
 
@@ -38,7 +38,7 @@ pnpm build      # build both applications
 pnpm start      # run the built API server
 pnpm test       # run all Vitest suites
 pnpm check      # run Biome checks
-pnpm check:fix  # run Biome checks and apply fixes
+pnpm check --fix  # run Biome checks and apply fixes
 pnpm typecheck  # run TypeScript checks for both applications
 ```
 
@@ -71,7 +71,7 @@ Browser
 
 The backend derives identity only from the Better Auth session cookie on the incoming request. It never accepts a client-supplied user ID as identity. Database clients, embedded engines, secrets, and Better Auth server configuration stay in `apps/api` and cannot enter the browser bundle.
 
-Better Auth owns `/api/auth/*`; application endpoints should not reimplement its protocol. Protected endpoints should use `currentUserMiddleware` and derive identity from `CurrentUser` in `apps/api/src/middleware/session.ts`.
+Better Auth owns `/api/auth/*`; application endpoints should not reimplement its protocol. Protected endpoints should use `sessionMiddleware` and derive identity from `Session` in `apps/api/src/middleware/session.ts`.
 
 ### Embedded SurrealDB
 
@@ -126,6 +126,45 @@ Build both applications:
 pnpm build
 ```
 
-`apps/web/dist` is a static SPA. Serve it with a real static host configured to fall back unknown page routes to `index.html`; it must not be used as a production web server. `apps/api/dist/server.js` is the Node backend, started by `pnpm start` (or `pnpm --filter api start`); production supervisors may instead run and scale the two processes separately.
+The API always mounts static routes for `public/`. Development uses Vite and its API proxy; Web builds remain in `apps/web/dist`, so the API's `public/` directory is absent during development. A missing static directory does not prevent startup; requests for missing files return 404. In production, assemble a single runtime directory containing the API build (`server.js`), API production `node_modules`, and the Web build in `public/`. The API serves `public/` relative to the process working directory alongside `/api`. The static layer does not validate `index.html` at startup.
 
-Use an absolute `SURREAL_ENDPOINT` or managed SurrealDB endpoint in production, route `/api` to the Effect server, and set `BETTER_AUTH_URL` to the public site origin.
+Start from the assembled runtime directory:
+
+```sh
+NODE_ENV=production node server.js
+```
+
+Unmatched extensionless GET/HEAD paths accepting HTML fall back to `index.html`, including paths under `/api/*` and `/assets/*`. Missing files with extensions return 404. All static files use `Cache-Control: no-cache` for revalidation. Set `BETTER_AUTH_URL` to the public site origin and use HTTPS through a reverse proxy in production.
+
+### Docker
+
+The build stage uses `pnpm build` (Turbo) to build Web and API in parallel, then assembles them into a new runtime image: `/app/server.js`, `/app/public/`, and `/app/node_modules/`. `pnpm --filter api deploy --prod` exports an isolated API deployment directory without development dependencies; only its production `node_modules` are copied. The runtime starts Node directly and does not include workspace configuration, pnpm, Turbo, or project development dependencies.
+
+```sh
+docker build -t solid-effect-starter .
+docker volume create starter-data
+docker run --rm --init \
+  -p 3001:3001 \
+  -e BETTER_AUTH_SECRET \
+  -e API_PORT=3001 \
+  -e BETTER_AUTH_URL=http://localhost:3001 \
+  -e SURREAL_ENDPOINT=surrealkv:///data/database \
+  -v starter-data:/data \
+  solid-effect-starter
+```
+
+Export a strong `BETTER_AUTH_SECRET` in the host environment before running these commands. Inject all container configuration through Docker environment variables; the runtime does not load `.env` files, and environment files are excluded from the build context. Set `API_PORT` and map the same container port with `-p` (for example, `-e API_PORT=8080 -p 3001:8080`). The image runs as the non-root `node` user. Named volumes inherit the writable `/data` directory; bind mounts must be writable by UID 1000. Replace the example public origin for your deployment. Do not mount the same embedded database into concurrent replicas.
+
+Apply migrations once before starting the service. The minimal runtime image does not include TypeScript migration tooling or source; use the Docker build stage as a separate migration image:
+
+```sh
+docker build --target build -t solid-effect-starter-migrate .
+docker run --rm --init \
+  -e BETTER_AUTH_SECRET \
+  -e SURREAL_ENDPOINT=surrealkv:///data/database \
+  -v starter-data:/data \
+  --user 1000:1000 \
+  solid-effect-starter-migrate pnpm --filter api db:migrate
+```
+
+Run this with the application stopped and the same namespace/database configuration. Create the named volume with writable ownership for UID 1000 before migration (for example, using the runtime image's `/data` directory). Never apply migrations automatically at startup.

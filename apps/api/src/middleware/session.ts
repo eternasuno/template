@@ -7,13 +7,13 @@ import {
 } from 'effect/http';
 import { Auth, AuthUnavailable } from '../infrastructure/auth';
 
-export class CurrentUser extends Context.Service<
-  CurrentUser,
+export class Session extends Context.Service<
+  Session,
   { id: string; name: string; email: string }
->()('CurrentUser') {}
+>()('Session') {}
 
-export const currentUserMiddleware = HttpRouter.middleware<{
-  provides: CurrentUser;
+export const sessionMiddleware = HttpRouter.middleware<{
+  provides: Session;
 }>()(
   Effect.gen(function* () {
     const auth = yield* Auth;
@@ -31,7 +31,7 @@ export const currentUserMiddleware = HttpRouter.middleware<{
           catch: (cause) => new AuthUnavailable({ cause }),
         });
         const response = session.response
-          ? yield* Effect.provideService(handler, CurrentUser, {
+          ? yield* Effect.provideService(handler, Session, {
               id: session.response.user.id,
               name: session.response.user.name,
               email: session.response.user.email,

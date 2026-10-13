@@ -6,22 +6,22 @@ description: Follow the client architecture and resource-lifecycle constraints w
 # Project Architecture
 
 - Inspect the relevant source and configuration before making changes. Prefer existing responsibilities and capabilities, and make only the minimum change required by the task.
-- The project is a pure client-side SolidJS 2 SPA with a separate Effect HttpServer API; the browser accesses the API through credentialed HTTP requests.
+- The project is a pure client-side SolidJS 1 SPA with a separate Effect HttpServer API; the browser accesses the API through credentialed HTTP requests.
 - Keep `apps/web` limited to browser routes, components, the Better Auth client, and the API client; preserve client rendering.
 - Do not introduce `apps/api`, Effect server modules, database clients, embedded engines, secrets, or Better Auth server configuration into web; do not add SSR or server functions.
 - API HTTP routes belong in `apps/api/src/routes`, runtime Layers and database capabilities in `apps/api/src/infrastructure`, and request middleware in `apps/api/src/middleware`; place server capabilities according to these responsibilities and do not move them into web.
 - Use `type` aliases for ordinary TypeScript data shapes and contracts. Preserve Effect Service classes and runtime classes such as `Data.TaggedError` constructors.
 - Keep shared Effect language-service settings in the root `tsconfig.json`; let app configs inherit them rather than duplicate the plugin array. Use app overrides only for genuinely app-specific settings.
 
+## Web Layers
+
+- `apps/web/src/lib` owns ordinary async operations and their parameter types; it must not import Solid APIs or router hooks, handle `FormData`, or perform UI navigation.
+- Components and `src/pages` own presentation, native form validation, conversion from `FormData` to logic-layer parameters, submission state, and navigation. Organize components into `atoms`, `molecules`, `organisms`, and `templates`.
+- `src/lib/auth.ts` initializes the single official Better Auth Solid client and exports authentication operations using that client directly. Adapter initialization and inferred session types are allowed here; invoke reactive hooks only in the presentation layer.
+
 ## Solid Session Subscription
 
-`authClient.useSession.subscribe` invokes its callback synchronously. When subscribing inside a Solid owned scope:
-
-1. Use `queueMicrotask` to defer the subscription itself so the synchronous initial callback occurs outside the owned scope.
-2. Check the cleanup state first inside the microtask; do not subscribe if cleanup has already occurred.
-3. Have `onCleanup` mark the cleanup state before cancelling an established subscription.
-
-Keep the unsubscribe operation to prevent state writes after unmount and resource leaks.
+Create the browser auth client with `createAuthClient` from `better-auth/solid`. Call `authClient.useSession()` inside the component's owned scope and read its returned accessor directly. The official adapter owns reactive updates and subscription cleanup; do not implement a separate signal or subscription bridge.
 
 ## Deployment Topology
 

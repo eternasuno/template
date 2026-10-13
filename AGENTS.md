@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Self-hosted starter with a pure SolidJS 2 SPA and a separate Effect HttpServer API using Better Auth and embedded SurrealDB/SurrealKV. It is a pnpm workspace managed with Turborepo.
+Self-hosted starter with a pure SolidJS 1 SPA and a separate Effect HttpServer API using Better Auth and embedded SurrealDB/SurrealKV. It is a pnpm workspace managed with Turborepo.
 
 ## Project skills
 

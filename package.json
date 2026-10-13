@@ -12,7 +12,6 @@
   "scripts": {
     "build": "turbo run build",
     "check": "biome check",
-    "check:fix": "biome check --fix",
     "dev": "turbo run dev",
     "prepare": "effect-tsgo patch",
     "start": "turbo run start",

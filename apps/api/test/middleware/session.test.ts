@@ -3,10 +3,7 @@ import { ConfigProvider, Effect, Layer } from 'effect';
 import { HttpRouter, HttpServerResponse } from 'effect/http';
 import { AuthLive } from '../../src/infrastructure/auth';
 import { DatabaseLive } from '../../src/infrastructure/db';
-import {
-  CurrentUser,
-  currentUserMiddleware,
-} from '../../src/middleware/session';
+import { Session, sessionMiddleware } from '../../src/middleware/session';
 
 const baseUrl = 'http://localhost:5173';
 
@@ -32,8 +29,8 @@ const AuthTestLive = AuthLive.pipe(
 const ProtectedRouteLive = HttpRouter.add(
   'GET',
   '/protected',
-  Effect.flatMap(CurrentUser, (user) => HttpServerResponse.json(user))
-).pipe(Layer.provide(currentUserMiddleware.layer), Layer.provide(AuthTestLive));
+  Effect.flatMap(Session, (user) => HttpServerResponse.json(user))
+).pipe(Layer.provide(sessionMiddleware.layer), Layer.provide(AuthTestLive));
 
 it.effect('rejects requests without a session', () =>
   Effect.acquireUseRelease(

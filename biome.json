@@ -57,7 +57,6 @@
         "noSecrets": "info"
       },
       "style": {
-        "noDefaultExport": "error",
         "noExcessiveLinesPerFile": {
           "level": "error",
           "options": {
@@ -66,7 +65,6 @@
           }
         },
         "noExportedImports": "error",
-        "noMagicNumbers": "warn",
         "noNestedTernary": "error",
         "noParameterAssign": {
           "level": "error",
@@ -82,37 +80,6 @@
       }
     }
   },
-  "overrides": [
-    {
-      "includes": ["test/**/*.ts", "**/*.test.ts", "**/*.spec.ts"],
-      "linter": {
-        "rules": {
-          "complexity": {
-            "noExcessiveLinesPerFunction": "off"
-          },
-          "style": {
-            "noMagicNumbers": "off"
-          }
-        }
-      }
-    },
-    {
-      "includes": [
-        "**/*.config.ts",
-        "**/*.config.js",
-        "**/routes/**",
-        "**/App.tsx",
-        "**/middleware.ts"
-      ],
-      "linter": {
-        "rules": {
-          "style": {
-            "noDefaultExport": "off"
-          }
-        }
-      }
-    }
-  ],
   "vcs": {
     "clientKind": "git",
     "enabled": true,

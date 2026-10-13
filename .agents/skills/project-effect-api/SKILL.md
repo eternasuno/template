@@ -9,7 +9,7 @@ description: Follow the server API constraints when working on this repository's
 
 - Better Auth exclusively owns `/api/auth/*`; do not reimplement the Better Auth protocol in application routes. Use Effect HTTP routes for other business operations.
 - Derive identity only from the Better Auth session cookie in the backend request; never accept or trust a user ID submitted by the client.
-- APIs requiring authentication must use `currentUserMiddleware` and obtain identity from `CurrentUser`; do not pass identity as a business parameter instead of validating the session.
+- APIs requiring authentication must use `sessionMiddleware` and obtain identity from `Session`; do not pass identity as a business parameter instead of validating the session.
 
 ## Shared Effect Services
 
