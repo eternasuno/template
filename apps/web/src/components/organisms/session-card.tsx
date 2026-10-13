@@ -1,7 +1,7 @@
+import { action, useAction, useSubmission } from '@solidjs/router';
 import { Show } from 'solid-js';
-import { createAuthAction } from '../lib/auth-form';
-import type { SessionState } from '../lib/session';
-import { FormError } from './form-error';
+import type { SessionState } from '../../lib/auth';
+import { FormError } from '../atoms/form-error';
 
 export const SessionLoading = () => (
   <div class="flex items-center gap-2" role="status">
@@ -16,7 +16,9 @@ type SessionCardProps = {
 };
 
 export const SessionCard = (props: SessionCardProps) => {
-  const logout = createAuthAction();
+  const signOut = action(async () => props.onLogout(), 'logout');
+  const run = useAction(signOut);
+  const logout = useSubmission(signOut);
 
   return (
     <section class="card card-border w-full max-w-2xl">
@@ -44,27 +46,30 @@ export const SessionCard = (props: SessionCardProps) => {
                   <dd>SolidJS + SurrealKV + Effect</dd>
                 </div>
               </dl>
-              <FormError message={logout.error()} />
+              <FormError
+                message={
+                  logout.error instanceof Error ? logout.error.message : ''
+                }
+              />
               <div class="card-actions justify-end">
                 <button
                   type="button"
+                  onClick={() => {
+                    if (!logout.pending) {
+                      void run().catch(() => {});
+                    }
+                  }}
                   class="btn"
-                  onClick={() =>
-                    void logout.run(
-                      props.onLogout,
-                      'Sign out failed. Please try again.'
-                    )
-                  }
-                  disabled={logout.pending()}
-                  aria-busy={logout.pending() ? 'true' : 'false'}
+                  disabled={logout.pending}
+                  aria-busy={logout.pending ? 'true' : 'false'}
                 >
-                  <Show when={logout.pending()}>
+                  <Show when={logout.pending}>
                     <span
                       class="loading loading-spinner loading-sm"
                       aria-hidden="true"
                     />
                   </Show>
-                  <span>{logout.pending() ? 'Signing out…' : 'Sign out'}</span>
+                  <span>{logout.pending ? 'Signing out…' : 'Sign out'}</span>
                 </button>
               </div>
             </>

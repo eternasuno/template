@@ -3,12 +3,6 @@ import { FormInput } from './form-input';
 
 export const PasswordConfirmation = () => {
   const [password, setPassword] = createSignal('');
-  let confirmInput!: HTMLInputElement;
-
-  const updatePassword = (value: string) => {
-    setPassword(value);
-    confirmInput.setCustomValidity('');
-  };
 
   return (
     <div class="flex flex-col gap-4">
@@ -20,8 +14,8 @@ export const PasswordConfirmation = () => {
         autocomplete="new-password"
         minlength={8}
         required
-        onInput={(event) => updatePassword(event.currentTarget.value)}
-        onChange={(event) => updatePassword(event.currentTarget.value)}
+        onInput={(event) => setPassword(event.currentTarget.value)}
+        onChange={(event) => setPassword(event.currentTarget.value)}
         hint="Password must be at least 8 characters."
       />
       <FormInput
@@ -30,14 +24,9 @@ export const PasswordConfirmation = () => {
         label="Confirm password"
         type="password"
         autocomplete="new-password"
-        ref={(element) => {
-          confirmInput = element;
-        }}
         pattern={RegExp.escape(password())}
         title="Passwords must match."
         required
-        onInput={(event) => event.currentTarget.setCustomValidity('')}
-        onChange={(event) => event.currentTarget.setCustomValidity('')}
         hint="Passwords must match."
       />
     </div>

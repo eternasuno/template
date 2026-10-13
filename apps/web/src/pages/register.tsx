@@ -1,5 +1,5 @@
-import { AuthPage } from '../components/auth-page';
-import { RegisterForm } from '../components/register-form';
+import { RegisterForm } from '../components/organisms/register-form';
+import { AuthPage } from '../components/templates/auth-page';
 
 const Register = () => {
   return (
