@@ -136,6 +136,12 @@ NODE_ENV=production node server.js
 
 Unmatched extensionless GET/HEAD paths accepting HTML fall back to `index.html`, including paths under `/api/*` and `/assets/*`. Missing files with extensions return 404. All static files use `Cache-Control: no-cache` for revalidation. Set `BETTER_AUTH_URL` to the public site origin and use HTTPS through a reverse proxy in production.
 
+### Workspace packages
+
+Internal packages may use `workspace:*` dependencies and export TypeScript source (for example, `"exports": "./src/index.ts"`). Workspace package injection is not enabled. Vite normally bundles linked workspace dependencies in the API SSR build; when adding an internal source package, inspect the generated API output for remaining runtime imports. Add `ssr.noExternal` only if needed. TypeScript `include`/`exclude` does not control bundler externalization.
+
+The pinned pnpm 12.3.4 supports default `deploy` without workspace injection (available since 12.2.0), so Docker does not use `--legacy`. Injection controls dependency installation and peer resolution, not whether source or compiled entry points are used.
+
 ### Docker
 
 The build stage uses `pnpm build` (Turbo) to build Web and API in parallel, then assembles them into a new runtime image: `/app/server.js`, `/app/public/`, and `/app/node_modules/`. `pnpm --filter api deploy --prod` exports an isolated API deployment directory without development dependencies; only its production `node_modules` are copied. The runtime starts Node directly and does not include workspace configuration, pnpm, Turbo, or project development dependencies.

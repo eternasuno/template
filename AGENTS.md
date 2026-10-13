@@ -16,4 +16,5 @@ Read the relevant skill first when the task involves:
 ## Workflow
 
 - Treat `README.md` as the source of truth for setup, commands, environment variables, routes, and deployment details.
+- Keep Docker runtime independent of the workspace: compiled API, Web assets in `public/`, and API production dependencies only; start Node directly and inject configuration through Docker environment variables. See README for the maintained layout and commands.
 - Before finishing changes, run `pnpm check`, `pnpm test`, and `pnpm build`.

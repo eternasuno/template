@@ -17,6 +17,8 @@ description: Follow the server API constraints when working on this repository's
 - Use the `Live` suffix for effective runtime Layers (for example, `AuthLive`). Construct the Effect only once in the Service Layer; consumers obtain the capability with `yield* Service`.
 - A Service is a shared dependency within the current Effect scope, not a permanently global process singleton; include root Layer composition in the application runtime.
 - Abstract a Service or Layer only for meaningful, reusable capability boundaries; avoid one-off `make*` wrappers, duplicate service types, and unnecessary Layers.
+- Keep route composition separate from runtime dependency provision in `server.ts`. Merge independent dependencies into one named Layer; retain provider nesting for real dependencies such as AuthLive requiring DatabaseLive, not for one-use category groups.
+- Prefer framework-provided route Layers over manually constructing equivalent handlers.
 - After composing multiple dependency Layers, call `Effect.provide` only once on the target Effect.
 
 ## API Details
